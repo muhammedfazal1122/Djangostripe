@@ -1,0 +1,234 @@
+{% extends 'base.html' %}{% load static %}
+{% block Title %}
+
+Billing Page
+
+{% endblock %}
+
+{% block body %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<div class="col-sm-12 dashboardsubdiv">
+    <div class="row rowclass">
+        <div class="col-sm-8">
+
+            <h5 class="hnames"> Billing </h5>
+        </div>
+        <div class="col-sm-4 text-right">
+            <h6 class="hnames1"> Need Help <span><i class="fa fa-question-circle-o" aria-hidden="true"></i>
+                </span> </h6>
+        </div>
+    </div>
+
+</div>
+
+
+
+{% if active %}
+
+<div class="col-sm-12">
+    <div class="row rowclass">
+        <div class="col-sm-4 subnamesdiv">
+            <h5 class="subnames">Activate Plan </h5>
+            <div class="col-sm-12 billingsec3">
+                <h5 class="currentplanheading"> <span> <img class="imgdetails" src="{% static 'images/dolor.svg' %}"
+                            alt="current plan">
+                    </span>Current plan details
+                </h5>
+                <h5 class="billingsec3ofthree"> {{ price_name }}</h5>
+                <h5 class="billingsec3offour"> {{ discription }}</h5>
+            </div>
+
+            <h4 class="billingstartsat">Starts at <span class="billingstartsatspans"> $0.00 USD </span> per unit + <span
+                    class="billingstartsatspans"> $0.00 USD </span> / month
+            </h4>
+
+            <div class="col-sm-12 maindivs">
+                <h2 class="currentbill">Current Billing</h2>
+                <h2 class="Remaining">Remaining Credits</h2>
+
+
+
+                <div class="col-sm-12">
+                    <div class="loaders hide " id="loades"> <span class="credists80"> 80 Credits </span> </div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-sm-4 subnamesdiv">
+            <h5 class="subnames">Analytics</h5>
+            <div class="subnamessubChat1">
+                <p>coming soon</p>
+            </div>
+            <div class="subnameAverageChat">Average Chat Time </div>
+            <div class="subnamessubChat1">
+                <p>coming soon</p>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <h5 class="subnamess">Explore other plans </h5>
+
+            <div class="col-sm-12 billingsec4">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <h5 class="currentplanheading"> Initiate <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <h5 class="billingsec3offour"> 2 simultaneous AI engines , 100 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $00.00 USD / month</h5>
+
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary upgrade"> UPGRADE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12 billingsec4">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <h5 class="currentplanheading"> Accelerate <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <!-- <h5 class="billingsec3ofthree"> 2 AI Agents</h5> -->
+                        <h5 class="billingsec3offour"> 2 simultaneous AI engines , 1000 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $25.00 USD / month</h5>
+
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary upgrade"> UPGRADE</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-sm-12 billingsec4">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <h5 class="currentplanheading"> corporate <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <h5 class="billingsec3offour"> 6 simultaneous AI engines , 5000 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $50.00 USD / month</h5>
+
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary upgrade"> UPGRADE</button>
+                    </div>
+                </div>
+            </div>
+
+
+            <div class="col-sm-12 billingsec4">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <h5 class="currentplanheading"> Titans <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <h5 class="billingsec3offour"> As many simultaneous AI engines as required, 100000 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $500.00 USD / month</h5>
+
+                    </div>
+                    <div class="col-sm-4">
+                        <button class="btn btn-primary upgrade"> UPGRADE</button>
+                    </div>
+                </div>
+            </div>
+
+
+
+        </div>
+
+
+    </div>
+</div>
+{% else %}
+
+    <div class="container m-2 p-2 row">
+
+                    <div class="col-sm-5 m-1 p-2 border border-dark">
+                        <h5 class="currentplanheading"> Initiate <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <h5 class="billingsec3offour"> 2 simultaneous AI engines , 100 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $00.00 USD / month</h5>
+                        <button class="btn btn-primary upgrade" onclick="selectPlan()" value="starter"> Subscribe</button>
+                    </div>
+                
+
+                    <div class="col-sm-5 m-1 p-2 border border-dark">
+                        <h5 class="currentplanheading"> Accelerate <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <!-- <h5 class="billingsec3ofthree"> 2 AI Agents</h5> -->
+                        <h5 class="billingsec3offour"> 2 simultaneous AI engines , 1000 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $25.00 USD / month</h5>
+
+                        <a href="{% url 'add_card' plan='pro1' %}"><button class="btn btn-primary upgrade" value="pro1"> Subscribe</button></a>
+                        
+                    </div>
+
+                    <div class="col-sm-5 m-1 p-2 border border-dark" >
+                        <h5 class="currentplanheading"> Titans <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <h5 class="billingsec3offour"> 6 simultaneous AI engines , 5000 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $50.00 USD / month</h5>
+
+                        <a href="{% url 'add_card' plan='pro2' %}"><button class="btn btn-primary upgrade" value="pro2"> Subscribe</button></a>
+                        
+                    </div>
+
+
+                    <div class="col-sm-5 m-1 p-2 border border-dark">
+                        <h5 class="currentplanheading"> Enterprise <span> <img class="imgdetails"
+                                    src="{% static 'images/dolor.svg' %}" alt="current plan">
+                            </span>
+                        </h5>
+                        <h5 class="billingsec3offour"> As many simultaneous AI engines as required, 100000 free conversations every month
+                        </h5>
+                        <h5 class="billingsec3offour"> Starts at $0.00 USD per unit + $500.00 USD / month</h5>
+                        <a href="{% url 'add_card' plan='pro3' %}"><button class="btn btn-primary upgrade" value="pro3"> Subscribe</button></a>
+                        
+                    </div>
+
+    </div>
+
+{% endif %}
+
+<script>
+    function selectPlan(){
+        console.log("hai");
+        console.log(window.event.target.value);
+        var plan=window.event.target.value;
+        $.ajax({
+                url: '{% url "billing" %}',
+                data: {
+                    'plan':plan
+                },
+                type: 'POST',
+                dataType: 'json',
+                success: function (data) {
+                    location.reload();
+                },
+        });
+                    
+    }
+</script>
+
+
+{% endblock %}

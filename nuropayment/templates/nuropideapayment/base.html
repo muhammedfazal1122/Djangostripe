@@ -1,0 +1,238 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %} {% endblock %}</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/css/bootstrap.min.css"
+        integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js"
+        integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.12.9/dist/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q"
+        crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.0.0/dist/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl"
+        crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/all.min.css"
+        integrity="sha512-xh6O/CkQoPOWDdYTDqeRdPCVd1SpvCA9XXcUnZS2FmJNp1coAFzvtCN9BmamE+4aHK8yyUHUSCcJHgXloTyT2A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+        integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/brands.min.css"
+        integrity="sha512-+oRH6u1nDGSm3hH8poU85YFIVTdSnS2f+texdPGrURaJh8hzmhMiZrQth6l56P4ZQmxeZzd2DqVEMqQoJ8J89A=="
+        crossorigin="anonymous" referrerpolicy="no-referrer" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="shortcut icon"
+        href="https://ik.imagekit.io/abhinesh/Nuopedia/Union_1_PS0DE_7wU.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1666777143967"
+        type="image/x-icon">
+    <link rel="stylesheet" href="{% static 'dist/css/template_main.min.css' %}">
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.2.0/css/datepicker.min.css"
+    rel="stylesheet">
+<script
+    src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.2.0/js/bootstrap-datepicker.min.js"></script>
+    
+    <style>
+
+    </style>
+    <style>
+        /* Background Overlay */
+.floating-window-overlay {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+/* Floating Window Content */
+.floating-window-content {
+  background-color: white;
+  border-radius: 8px;
+  padding: 20px;
+  width: 80vw;
+  max-height: 80vh;
+  position: relative;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  overflow: auto;
+}
+
+/* Close Button */
+.close-button {
+  position: absolute;
+  top: 10px;
+  right: 15px;
+  font-size: 28px;
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+}
+
+.close-button:hover {
+  background-color: #dce7f1;
+  border-radius: 4px;
+}
+
+/* Open Button */
+.open-button {
+  padding: 10px 20px;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 16px;
+  margin-top: 20px;
+}
+
+.main {
+  width: 100%;
+  height: 100%; /* Add height to center vertically within the floating window */
+  display: flex;
+  /* align-items: center; Vertically center sections */
+  justify-content: space-around; /* Distribute space between sections */
+  gap: 0.8rem;
+}
+
+
+.floating-window-content a {
+  text-decoration-line: none;
+}
+
+.infoSection {
+  background-color: #f0f8ff;
+  width: 33.33%;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+
+
+/* Styling for List */
+ol {
+  padding-left: 1.5rem;
+}
+
+li {
+  margin-bottom: 0.5rem;
+  line-height: 1.5;
+}
+
+.flot-head-two {
+  font-size: 1.4rem;
+  margin: 0px;
+  margin-bottom: 5px;
+}
+
+.flot-head-three {
+  font-size: 1rem;
+  margin-top: 0px;
+  color: #202020;
+}
+
+.hidden {
+  display: none;
+}
+    </style>
+</head>
+
+<body>
+    <div class="content-wrapper">
+
+        <div class="row" style="margin-right: 0px !important;">
+
+            <div class=" col-1 navs" style="width: 8%;">
+                {% block head %} {% endblock %}
+                <div class="col-sm-12 logo">
+                    <a>
+
+                        <img src="https://ik.imagekit.io/abhinesh/Nuopedia/Union_1_PS0DE_7wU.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1666777143967"
+                            alt="Ofiice Logo">
+
+                    </a>
+                </div>
+                <hr class="hrs">
+                <div class="col-sm-12 boxes">
+                    <a href="{% url 'dashboard' %}" class=" active">
+
+
+                        <i class="fa fa-th-large spannameicons" aria-hidden="true"></i>
+
+                        <span class="spannamess"> Dashboard</span>
+                    </a>
+                </div>
+
+                <div class="col-sm-12 boxes1">
+                    <a href="{% url 'billing' %}">
+
+                        <img class="imgs"
+                            src="https://ik.imagekit.io/abhinesh/Nuopedia/bill_F46OTUTrDV.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1666777143976"
+                            alt="Billing">
+
+                        <span class="spannames"> Billing</span>
+                    </a>
+                </div>
+
+                <!-- <div class="col-sm-12 boxes2">
+                    <a href="{% url 'user_profile' %}">
+
+                        <img class="imgs"
+                            src="https://ik.imagekit.io/abhinesh/Nuopedia/user_h9sJppP3W.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1666777143958"
+                            alt="User Personal">
+                        <span class="spannames"> Profile </span>
+                    </a>
+                </div> -->
+
+                <div style="  position: absolute; bottom:8%;" class="col-sm-12 boxes2">
+                    <a href="{% url 'user_profile' %}">
+                        <div class="circle"> <span class="circleName"> C </span> </div>
+                    </a>
+                    <a href="{% url 'logout' %}" ><span class="spannamess"> Sign out</span> </a>
+                    <!-- <span class="spannamess"> Sign out </span> -->
+                    <!-- <div class="circleTwo"></div> -->
+                </div>
+
+                <!-- <div class="col-sm-12 boxes2">
+
+                        <img class="imgs"
+                            src="https://ik.imagekit.io/abhinesh/Nuopedia/user_h9sJppP3W.svg?ik-sdk-version=javascript-1.4.3&updatedAt=1666777143958"
+                            alt="User Personal">
+                        <span class="spannames"> Add card </span>
+                    </a>
+                </div> -->
+
+
+            </div>
+
+
+            <div class="col-sm-11 dashboarddiv">
+                {% block body %} {% endblock %}
+                {% for message in messages %}
+                <div class="alert {{ message.tags }} alert-dismissible" role="alert">
+                    <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        <script type="text/javascript">
+            window.setTimeout(function () {
+                $(".alert").fadeTo(700, 0).slideUp(700, function () {
+                    $(this).remove();
+                });
+            }, 3000);
+        </script>
+</body>
+
+</html>

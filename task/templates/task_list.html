@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto mt-4">
+    <h2 class="text-2xl font-bold">Your Tasks</h2>
+    <ul class="mt-4">
+        {% for task in tasks %}
+            <li class="bg-white p-4 shadow mb-2">{{ task.title }} - {{ task.description }}</li>
+        {% empty %}
+            <li>No tasks available.</li>
+        {% endfor %}
+    </ul>
+    <a href="{% url 'create_task' %}" class="mt-4 inline-block bg-blue-500 text-white px-4 py-2 rounded">Add Task</a>
+</div>
+{% endblock %}

@@ -1,0 +1,116 @@
+{% extends 'payment/base.html' %}{% load static %}
+{% block Title %}
+
+Billing Page
+
+{% endblock %}
+
+{% block body %}
+
+
+    <div class="rowclass">
+        
+
+        <div id="idCard" class="subnamesdiv cardContainer">
+            <h5 class="subnames">Payment details</h5>
+            <div class="row ">
+                <div class="col-sm-3 divadjs text-center">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <img class="imgdetailsCard" src="{% static 'images/debit_card.svg' %}" alt="current plan">
+                        </div>
+                        <div class="col-sm-0">
+                            <p class="cardsTexts">Credit Card</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-3 divadjs text-center">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <img class="imgdetailsCard" src="{% static 'images/cradit_card.svg' %}" alt="current plan">
+                        </div>
+                        <div class="col-sm-0">
+                            <p class="cardsTexts">Debit Card</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subnameAverageChat">
+
+                <form role="form" method="POST">
+                    {% csrf_token %}
+                    <div class="form-group">
+                        <label for="exampleInputEmail1" class="cardNames">Card Number </label>
+                        <input type="tel" name="card_number" class="form-control cardNum" id="exampleInputEmail1"  aria-describedby="emailHelp">
+
+                    </div>
+                
+
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p class="cardNames"> Expiration Date </p>
+                        <div class="row">
+                            <div class="col-sm-5">
+
+                                <input class="date-own1 form-control cardDetails" name="exp_month" type="text" placeholder="month">
+                                <span> <i class="fa fa-angle-down carrots" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                            <div class="col-sm-5">
+                                <input class="date-own form-control cardDetails" name="exp_year" type="text" placeholder="year">
+                                <span> <i class="fa fa-angle-down carrots" aria-hidden="true"></i>
+                                </span>
+
+                            </div>
+
+
+
+                        </div>
+
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="cardNames1"> cvv</p>
+                        <input class="own form-control" style="width: 60px;" type="text" placeholder="cvv">
+
+                    </div>
+                </div>
+
+                <p class="lastTexts cardNames">By submitting you payment details, you agree to Nuropedia's <span
+                        class="lastTextspan"> Terms of use </span> and <span class="lastTextspan"> Privacy
+                        policy.
+                    </span> </p>
+                <input type="text" name="plan" value="{{ plan }}" hidden>
+                <div class="col-sm-6 cardNames" style="text-align: center;">
+                        <button class="btn btn-primary upgrades" type="submit">Submit </button>
+                </div>
+                </form>
+            </div>
+
+        </div>
+
+
+
+    </div>
+
+<script>
+    $('.date-own').datepicker({
+        minViewMode: 2,
+
+        format: 'yyyy',
+
+    });
+    $('.date-own1').datepicker({
+
+
+
+        format: "mm",
+    });
+
+    // $("#loader").show();
+
+</script>
+
+{% endblock %}

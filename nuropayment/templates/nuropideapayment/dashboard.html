@@ -1,0 +1,344 @@
+{% extends 'payment/base.html' %}{% load static %}
+{% block Title %}
+
+Dash Borard
+
+{% endblock %}
+
+{% block body %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+ <!-- Floating Window -->
+<!-- Add from here to the dashboard page code [START] -->
+    <!-- Floating Window -->
+    <div id="floatingWindow" class="floating-window-overlay">
+      <div class="floating-window-content">
+        <button onclick="closeFloatingWindow()" class="close-button">
+          &times;
+        </button>
+        <main class="main">
+          <section class="infoSection">
+            <h2 class="flot-head-two">Installation Setup</h2>
+            <!-- <h3 class="flot-head-three">Steps to Install Nuropedia plugin</h3> -->
+            <ol>
+              <li>Log in to your WordPress admin console.</li>
+              <li>Go to Plugins marketplace, then select Add New.</li>
+              <li>
+                Search for
+                <a
+                  href="https://wordpress.org/plugins/nuropedia/"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >"Nuropedia"</a
+                >
+                , then click on "Install Now".
+              </li>
+              <li>
+                If you don't find the plugin in search, download it from this
+                URL:
+                <a
+                  href="https://nuropedia.nuronics.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >https://nuropedia.nuronics.com</a
+                >
+              </li>
+              <li>
+                Once downloaded, select "Upload Plugin" and choose the
+                downloaded file.
+              </li>
+              <li>
+                Click on "Installed Plugins" under Plugins, and activate
+                Nuropedia.
+              </li>
+            </ol>
+          </section>
+          <section class="infoSection">
+            <h2 class="flot-head-two">SignUp and Activation</h2>
+            <!-- <h3 class="flot-head-three">
+              Already installed Plugin ? Follow these steps for account
+              activation / billing
+            </h3> -->
+            <ol>
+              <li>
+                Create account via signup page -
+                <a
+                  href="https://nuropedia.nuronics.com/register"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >https://nuropedia.nuronics.com/register</a
+                >
+              </li>
+              <li>
+                Fill the details and complete the email verification for
+                registering email address
+              </li>
+              <li>
+                *Link your Google Calendar; Authorize Nuropedia to manage
+                calendar events by activating the link. Check an email with
+                subject line “Link your Calendar..”
+              </li>
+              <li>
+                After Successful account creation and Calendar Integration,
+                continue to Plan selection
+              </li>
+              <li>
+                To Select Plan, navigate to
+                <a
+                  href="https://nuropedia.nuronics.com/billing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >https://nuropedia.nuronics.com/billing/</a
+                >
+                page
+              </li>
+            </ol>
+          </section>
+          <section class="infoSection">
+            <h2 class="flot-head-two">Plan selection & billing</h2>
+            <!-- <h3 class="flot-head-three">
+              Already installed Plugin ? Follow these steps for account
+              activation / billing
+            </h3> -->
+            <ol>
+              <li>
+                Go to
+                <a
+                  href="https://nuropedia.nuronics.com/billing"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  >https://nuropedia.nuronics.com/billing/</a
+                >
+                page
+              </li>
+              <li>Choose a plan</li>
+              <li>Fill the details for payment confirmation</li>
+              <li>
+                Once confirmed, Go back to WordPress - CMS console and hit
+                “Refresh”
+              </li>
+              <li>Access “Nuropedia” Section and click “Activate”</li>
+              <li>Within 5 minutes, Nuropedia is ready to use on website.</li>
+            </ol>
+          </section>
+        </main>
+      </div>
+    </div>
+    <!-- Add from here to the dashboard page code [END] -->
+
+  <script>
+    function closeFloatingWindow() {
+     document.getElementById("floatingWindow").classList.add("hidden");
+   }
+ </script>
+<div class="col-sm-12 dashboardsubdiv">
+    <div class="row rowclass">
+        <div class="col-sm-8">
+
+            <h5 class="hnames"> Dashboard </h5>
+        </div>
+        <div class="col-sm-4 text-right">
+            <h6 class="hnames1"> Need Help <span><i class="fa fa-question-circle-o" aria-hidden="true"></i>
+                </span> </h6>
+        </div>
+    </div>
+
+</div>
+
+
+<div class="col-sm-12">
+    <div class="row rowclass">
+        <div class="col-sm-4 subnamesdiv">
+            <h5 class="subnames">Activated Websites </h5>
+            <div class="col-sm-12 dashcol1search">
+                <form action="">
+                    <div class="p-1  rounded rounded-pill shadow-sm ">
+                        <div class="input-group" style="
+                        border-radius: 10px;
+                        position: relative;
+                        top: 3px;">
+                            <input type="search" placeholder="Search Websites " aria-describedby="button-addon1"
+                                class="form-control border-0 " style="    font-size: 12px;
+                                position: relative;
+                                top: 4px;
+                                left: 7px;">
+                            <div class="input-group-append">
+                                <button id="button-addon1" type="submit" class="btn btn-link "><i
+                                        class="fa fa-search"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+
+            {% for each_url in hooked_urls %}
+                <div class="subnamessub">{{each_url}}</div>
+            {% endfor %}
+            <!-- <div class="subnamessub">Domain_Name-1.com 
+                <span class="dashactdots"><i class="fa fa-circle"
+                    aria-hidden="true"></i>
+                <span class="dashaddnewsdots"> Add
+                    New </span>
+            </span>
+            </div> -->
+
+
+
+
+
+
+
+        </div>
+
+        <div class="col-sm-4 subnamesdiv">
+            <!-- <h5 class="subnames">Websites Details</h5>
+            <div class="subnamessub">Domain_Name-1.com <span class="dashactdotsdet"><i class="fa fa-circle"
+                        aria-hidden="true"></i>
+                    <span class="dashaddnewsdots"> Add
+                        New </span>
+                </span> <span style="margin-left: 9px;color: red;"><i class="fa fa-trash" aria-hidden="true"></i></span>
+            </div> -->
+
+            <div class="subnamessubChat">Chat History </div>
+            <div class="subnamessubChat1">
+                <p>Coming  soon</p>
+            </div>
+        </div>
+
+        <div class="col-sm-4">
+            <h5 class="subnamess">Customize Plugin</h5>
+            <h5 class="subnamesBrandcolors">Enter Your Brand Colors </h5>
+            <div class="row">
+                <div class="col-sm-4">
+                    <h6 class="subcolor"> Color One <span> <input type="text" id="id_left_color" class="form-control" 
+                                aria-label="Username" aria-describedby="basic-addon1" style="font-size: 12px;">
+                        </span></h6>
+                </div>
+
+                <div class="col-sm-4">
+                    <h6 class="subcolor"> Color Two <span> <input type="text" id="id_right_color" class="form-control" 
+                                style="font-size: 12px;" aria-label="Username" aria-describedby="basic-addon1">
+                        </span></h6>
+
+                </div>
+
+                <div class="col-sm-4">
+                    <button class="btn btn-primary subupdate" onclick="cusUpdate()"> Update </button>
+
+                </div>
+            </div>
+
+            <div class="row pb-2 ">
+
+                <p class="col-12 ml-2 nuroh4 text-primary"><b>Choose from our gallery</b> </p>
+
+                <div col="col-6">
+                    <img class="hoverImg" onclick="changeColor1()" src="{% static 'images/sampleBot1.svg' %}" alt="" width="200px" height="80px">
+                </div>
+
+                <div col="col-6">
+                    <img class="hoverImg" onclick="changeColor2()" src="{% static 'images/sampleBot2.svg' %}" alt="" width="200px" height="80px">
+                </div>
+
+                <div col="col-6 p-2">
+                    <img class="hoverImg" onclick="changeColor3()" src="{% static 'images/sampleBot3.svg' %}" alt="" width="200px" height="80px">
+                </div>
+
+                <div col="col-6 p-2">
+                    <img class="hoverImg" onclick="changeColor4()" src="{% static 'images/sampleBot4.svg' %}" alt="" width="200px" height="80px">
+                </div>
+            </div>
+            <h5 class="subplgpiv"> Plugin Preview</h5>
+            <div class="heading-area-main ">
+                <div class="heading-area" id="id-heading-area">
+                    <img src="{% static 'images/group_23.svg' %}" width="40px" height="40px" alt="" />
+                    <div class="heading-area-text">
+                        <span class='nuroh1'>Chat with</span><br>
+                        <span class='nuroh4'>nuropedia</span>
+                    </div>
+                    <i class="fa-sharp fa-solid fa-angle-down alignRight"></i>
+                </div>
+            </div>
+
+        </div>
+
+
+    </div>
+</div>
+
+<script>
+
+    function update_color(color1,color2){
+        console.log(color1,color2);
+        console.log('hlo');
+
+        $.ajax({
+            url: '{%  url "set_color" %}',
+            method: "POST",
+            data: {
+                'first_color':color1,
+                'second_color':color2,
+            },
+            dataType: 'json',
+            success: function(){
+                console.log("success");
+            }
+
+				
+        });    
+
+    }
+
+    function changeColor1(){
+        changeColor("#6460FB","#3499FF");
+      }
+
+      function changeColor2(){
+        changeColor("#F650A0","#FF9897");
+        
+      }
+
+      function changeColor3(){
+        changeColor("#00B8BA","#00AE40");
+      }
+
+      function changeColor4(){
+        changeColor("#EA4D2C","#FFA62E");
+      }
+
+      function cusUpdate(){
+        left_color_obj = document.getElementById("id_left_color");
+        right_color_obj = document.getElementById("id_right_color");
+
+        left_color = left_color_obj.value;
+        right_color = right_color_obj.value;
+        console.log(left_color,right_color);
+        changeColor(left_color,right_color);
+      }
+
+      function changeColor(left_color,right_color){
+
+        console.log(left_color,right_color,'<----------');
+        update_color(left_color,right_color)
+
+        left_color_obj = document.getElementById("id_left_color");
+        right_color_obj = document.getElementById("id_right_color");
+        left_color_obj.value = left_color
+        right_color_obj.value = right_color
+
+        xx=document.getElementsByClassName("heading-area-main");
+        xx[0].style.backgroundImage="linear-gradient(to right,"+ left_color+","+right_color;
+
+        yy=document.getElementsByClassName("heading-area");
+        yy[0].style.backgroundImage="linear-gradient(to right,"+ left_color+","+right_color;
+
+
+
+        left_color_obj = document.getElementById("id_left_color");
+        right_color_obj = document.getElementById("id_right_color");
+        // left_color_obj.value=left_color;
+        // right_color_obj.value=right_color;
+    }
+    console.log('hi');
+    changeColor(`{{color1}}`,`{{color2}}`);
+</script>
+{% endblock %}

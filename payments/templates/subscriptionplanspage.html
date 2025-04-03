@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-12">
+    <div class="text-center mb-12">
+        <h1 class="text-4xl font-bold text-gray-800 mb-4">Subscription Plans</h1>
+        <p class="text-xl text-gray-600">Choose the perfect plan for your needs</p>
+    </div>
+
+    {% if active_subscription %}
+    <div class="bg-green-100 p-4 mb-4 rounded text-center">
+        <p class="text-lg font-semibold text-green-800">
+            Your current active subscription: {{ active_subscription.plan.name }}
+        </p>
+    </div>
+    {% endif %}
+
+    <!-- Billing Cycle Toggle -->
+    <div class="flex justify-center mb-8">
+        <div class="bg-white rounded-full shadow-md p-1 flex items-center">
+            <button class="px-4 py-2 rounded-full bg-blue-500 text-white">
+                Monthly
+            </button>
+            <button class="px-4 py-2 rounded-full text-gray-600 hover:bg-gray-100">
+                Annually 
+                <span class="text-xs ml-2 bg-green-500 text-white px-2 py-1 rounded">
+                    Save 5%
+                </span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Pricing Cards -->
+    <div class="grid md:grid-cols-3 gap-6">
+        {% for plan in plans %}
+        <div class="bg-white border {% if active_subscription and active_subscription.plan.id == plan.id %}border-gray-400{% else %}border-gray-200{% endif %} rounded-xl p-6 text-center hover:shadow-lg transition-all">
+            <h2 class="text-2xl font-bold mb-4">{{ plan.name }}</h2>
+            <div class="mb-4">
+                <span class="text-4xl font-bold">${{ plan.price }}</span>
+                <span class="text-gray-500">/month</span>
+            </div>
+            <p class="text-gray-600 mb-6">{{ plan.description }}</p>
+
+            <ul class="mb-8 space-y-3 text-left">
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    {{ plan.api_calls_per_month }} API Calls per Month
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Access to Premium Features
+                </li>
+                <li class="flex items-center">
+                    <svg class="w-5 h-5 text-green-500 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Priority Support
+                </li>
+                {% comment %} {% if plan.stripe_price_id %}
+                <li class="flex items-center text-gray-500 text-sm">
+                    <svg class="w-5 h-5 text-gray-400 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                    </svg>
+                    Stripe ID: {{ plan.stripe_price_id }}
+                </li>
+                {% endif %} {% endcomment %}
+            </ul>
+
+            {% if active_subscription and active_subscription.plan.id == plan.id %}
+            <button class="w-full bg-gray-200 text-gray-700 py-3 rounded-lg cursor-not-allowed">
+                Current Plan
+            </button>
+            {% else %}
+            <a href="{% url 'subscribe_to_plan' plan.id %}" 
+               class="w-full bg-blue-500 text-white py-3 rounded-lg block text-center hover:bg-blue-600 transition-colors">
+                Select Plan
+            </a>
+            {% endif %}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

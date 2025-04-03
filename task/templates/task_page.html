@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mx-auto mt-4">
+    <h2 class="text-2xl font-bold">Task Manager</h2>
+
+    <!-- API Metering Section -->
+    <div class="p-4 bg-blue-100 border border-blue-300 rounded mt-4">
+        <h3 class="text-lg font-bold">API Metering</h3>
+        <p><strong>Total API Calls:</strong> {{ metering.total_calls }} / {{ total_limit }}</p>
+        <p><strong>Daily API Calls:</strong> {{ metering.daily_calls }} / {{ daily_limit }}</p>
+    </div>
+
+    <!-- Create Task Form -->
+    <form method="POST" action="{% url 'task_page' %}" class="mt-4">
+        {% csrf_token %}
+        <input type="text" name="title" placeholder="Title" class="block w-full p-2 border mb-2" required>
+        <textarea name="description" placeholder="Description" class="block w-full p-2 border mb-2" required></textarea>
+        <button type="submit" class="bg-green-500 text-white px-4 py-2 rounded">Create Task</button>
+    </form>
+
+    <!-- Task List -->
+    <h2 class="text-2xl font-bold mt-6">Your Tasks</h2>
+    <ul class="mt-4">
+        {% for task in tasks %}
+            <li class="bg-white p-4 shadow mb-2">
+                <form method="POST" action="{% url 'update_task' task.id %}">
+                    {% csrf_token %}
+                    <input type="text" name="title" value="{{ task.title }}" class="w-full p-1 border mb-2">
+                    <textarea name="description" class="w-full p-1 border mb-2">{{ task.description }}</textarea>
+                    <button type="submit" class="bg-yellow-500 text-white px-4 py-2 rounded">Update</button>
+                </form>
+                <form method="POST" action="{% url 'delete_task' task.id %}" class="inline-block">
+                    {% csrf_token %}
+                    <button type="submit" class="bg-red-500 text-white px-4 py-2 rounded">Delete</button>
+                </form>
+            </li>
+        {% empty %}
+            <li>No tasks available.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

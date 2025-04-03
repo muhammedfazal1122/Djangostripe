@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mx-auto p-4">
+    <h1 class="text-2xl font-bold mb-4">Add Payment Method</h1>
+    
+    <form id="payment-form">
+        <div id="card-element" class="mb-4 p-2 border rounded">
+            <!-- Stripe Elements Placeholder -->
+        </div>
+        
+        <button id="submit" class="bg-blue-500 text-white py-2 px-4 rounded">
+            Add Payment Method
+        </button>
+        
+        <div id="card-errors" role="alert" class="text-red-500 mt-2"></div>
+    </form>
+</div>
+
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+    var stripe = Stripe('{{ stripe_public_key }}');
+    var elements = stripe.elements();
+    var cardElement = elements.create('card');
+    cardElement.mount('#card-element');
+
+    var form = document.getElementById('payment-form');
+    var submitButton = document.getElementById('submit');
+    
+    form.addEventListener('submit', async (event) => {
+        event.preventDefault();
+        submitButton.disabled = true;
+
+        const {setupIntent, error} = await stripe.confirmCardSetup(
+            '{{ client_secret }}',
+            {
+                payment_method: {
+                    card: cardElement
+                }
+            }
+        );
+
+        if (error) {
+            var errorElement = document.getElementById('card-errors');
+            errorElement.textContent = error.message;
+            submitButton.disabled = false;
+        } else {
+            // Payment method added successfully
+            window.location.href = '/billing/';
+        }
+    });
+</script>
+{% endblock %}

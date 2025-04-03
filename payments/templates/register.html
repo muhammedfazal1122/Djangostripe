@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div style="display: flex; justify-content: center; align-items: center; min-height: 100vh; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); padding: 20px;">
+    <div style="width: 100%; max-width: 450px; background-color: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1); padding: 40px; transition: transform 0.3s ease;">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h2 style="color: #333; font-weight: 700; margin-bottom: 8px; font-size: 28px;">Create Account</h2>
+            <p style="color: #777; font-size: 16px;">Join us today and get started</p>
+        </div>
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div style="padding: 15px; border-radius: 8px; margin-bottom: 20px; background-color: #ffebee; color: #c62828; border: 1px solid #ffcdd2;">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+        
+        <form method="POST" style="margin-bottom: 20px;">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 20px;">
+                <label for="full_name" style="display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px;">Full Name</label>
+                <div style="position: relative;">
+                    <i class="fa fa-user" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+                    <input type="text" id="full_name" name="full_name" required style="width: 100%; padding-left: 45px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; transition: all 0.3s; font-size: 15px; box-sizing: border-box;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="email" style="display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px;">Email Address</label>
+                <div style="position: relative;">
+                    <i class="fa fa-envelope" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+                    <input type="email" id="email" name="email" required style="width: 100%; padding-left: 45px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; transition: all 0.3s; font-size: 15px; box-sizing: border-box;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="password" style="display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px;">Password</label>
+                <div style="position: relative;">
+                    <i class="fa fa-lock" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+                    <input type="password" id="password" name="password" required style="width: 100%; padding-left: 45px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; transition: all 0.3s; font-size: 15px; box-sizing: border-box;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 20px;">
+                <label for="confirm_password" style="display: block; margin-bottom: 8px; color: #555; font-weight: 500; font-size: 14px;">Confirm Password</label>
+                <div style="position: relative;">
+                    <i class="fa fa-lock" style="position: absolute; left: 15px; top: 50%; transform: translateY(-50%); color: #aaa;"></i>
+                    <input type="password" id="confirm_password" name="confirm_password" required style="width: 100%; padding-left: 45px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; transition: all 0.3s; font-size: 15px; box-sizing: border-box;">
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: flex-start; margin-bottom: 20px; font-size: 14px;">
+                <input type="checkbox" id="terms" name="terms" required style="margin-right: 8px; margin-top: 3px;">
+                <label for="terms" style="color: #555;">I agree to the <a href="#" style="color: #6c63ff; text-decoration: none; transition: color 0.3s;">Terms of Service</a> and <a href="#" style="color: #6c63ff; text-decoration: none; transition: color 0.3s;">Privacy Policy</a></label>
+            </div>
+            
+            <button type="submit" style="width: 100%; height: 55px; background: linear-gradient(45deg, #6c63ff, #8882ff); border: none; border-radius: 8px; color: white; font-size: 16px; font-weight: 600; cursor: pointer; transition: all 0.3s;">Create Account</button>
+        </form>
+        
+        <div style="text-align: center; margin: 25px 0; position: relative;">
+            <div style="position: absolute; top: 50%; left: 0; right: 0; height: 1px; background-color: #e0e0e0; z-index: 0;"></div>
+            <span style="background-color: white; padding: 0 15px; position: relative; z-index: 1; color: #777; font-size: 14px;">or sign up with</span>
+        </div>
+        
+        <div style="display: flex; justify-content: center; gap: 15px; margin-bottom: 25px;">
+            <button class="social-btn google" style="width: 55px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; background-color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;">
+                <i class="fab fa-google" style="font-size: 20px; color: #DB4437;"></i>
+            </button>
+            <button class="social-btn facebook" style="width: 55px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; background-color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;">
+                <i class="fab fa-facebook-f" style="font-size: 20px; color: #4267B2;"></i>
+            </button>
+            <button class="social-btn apple" style="width: 55px; height: 55px; border-radius: 8px; border: 1px solid #e0e0e0; background-color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s;">
+                <i class="fab fa-apple" style="font-size: 20px; color: #000000;"></i>
+            </button>
+        </div>
+        
+        <p style="text-align: center; color: #555; font-size: 14px; margin: 0;">Already have an account? <a href="{% url 'login' %}" style="color: #6c63ff; font-weight: 600; text-decoration: none; transition: color 0.3s;">Sign In</a></p>
+    </div>
+</div>
+{% endblock %}

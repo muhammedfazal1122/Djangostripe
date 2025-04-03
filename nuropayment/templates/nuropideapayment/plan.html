@@ -1,0 +1,255 @@
+{% extends 'payment/base.html' %}{% load static %}
+{% block Title %}
+
+Billing Page
+
+{% endblock %}
+
+{% block body %}
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.1/jquery.min.js"></script>
+<div class="col-sm-12 dashboardsubdiv">
+    <div class="row rowclass">
+        <div class="col-sm-8">
+
+            <h5 class="hnames"> Billing </h5>
+        </div>
+        <div class="col-sm-4 text-right">
+            <h6 class="hnames1"> Need Help <span><i class="fa fa-question-circle-o" aria-hidden="true"></i>
+                </span> </h6>
+        </div>
+    </div>
+
+</div>
+
+<div class="col-sm-12">
+    <div class="rowclass">
+        <div class="subnamesdiv ">
+            <h5 class="subnames">Explore our plans</h5>
+            <br>
+
+            <div class="row">
+                <div class="pbillingsec2 col-5">
+                    <div class="row">
+                        <div class="col-sm-9 pbillingsec3">
+                            <h5 class="currentplanheading"> Initiate
+                                <span> ;
+                                </span>
+                            </h5>
+                            <p class="billingsec3ofthree"> 2 AI Agents</p>
+                            <p class="billingsec3offour">2 simultaneous AI engines, 100 free conversations every
+                                month
+                            </p>
+                            <p class="billingstartsat">Starts at <span class="billingstartsatspans"> $0.00 USD
+                                </span>
+                                per
+                                unit +
+                                <span class="billingstartsatspans"> $0.00 USD </span> / month
+                            </p>
+                        </div>
+                        <div class="col-sm-3">
+                            <button class="btn btn-primary upgrade" onclick="selectPlan()" value="initiate" style="width: 85%">
+                                Subscribe</button>
+                        </div>
+                    </div>
+                </div>
+                <div class="pbillingsec2 col-5">
+                    <div class="row">
+                        <div class="col-sm-9 pbillingsec3">
+                            <h5 class="currentplanheading"> Accelerate
+                                <span> ;
+                                </span>
+                            </h5>
+                            <p class="billingsec3ofthree"> 2 AI Agents</p>
+                            <p class="billingsec3offour">2 simultaneous AI engines , 1000 free conversations every month</p>
+
+                            <p class="billingstartsat">Starts at <span class="billingstartsatspans"> $0.00 USD
+                                </span>
+                                per
+                                unit +
+                                <span class="billingstartsatspans"> $25.00 USD </span> / month
+                            </p>
+                        </div>
+                        <div class="col-sm-3">
+                            <a href="{% url 'add_card' plan='accelerate' %}"><button style="width: 85%" class="btn btn-primary upgrade" value="pro1"> Subscribe</button></a>
+                            
+                        </div>
+                    </div>
+                </div>
+    
+                <div class="pbillingsec2 col-5">
+                    <div class="row">
+                        <div class="col-sm-9 pbillingsec3">
+                            <h5 class="currentplanheading"> Corporate
+                                <span> ;
+                                </span>
+                            </h5>
+                            <p class="billingsec3ofthree"> 6 AI Agents</p>
+                            <p class="billingsec3offour">6 simultaneous AI engines , 5000 free conversations every month</p>
+                            <p class="billingstartsat">Starts at <span class="billingstartsatspans"> $0.00 USD
+                                </span>
+                                per
+                                unit +
+                                <span class="billingstartsatspans"> $50.00 USD </span> / month
+                            </p>
+                        </div>
+                        <div class="col-sm-3">
+                            <a href="{% url 'add_card' plan='corporate' %}"><button style="width: 85%" class="btn btn-primary upgrade" value="pro2"> Subscribe</button></a>
+                        </div>
+                    </div>
+                </div>
+                <div class="pbillingsec2 col-5">
+                    <div class="row">
+                        <div class="col-sm-9 pbillingsec3">
+                            <h5 class="currentplanheading"> ENTERPRISE PLAN
+                                <span> ;
+                                </span>
+                            </h5>
+                            <p class="billingsec3ofthree"> As required</p>
+                            <p class="billingsec3offour">As many simultaneous AI engines as required, 100000 free conversations every month
+                                
+                            </p>
+                            <p class="billingstartsat">Starts at <span class="billingstartsatspans"> $0.00 USD
+                                </span>
+                                per
+                                unit +
+                                <span class="billingstartsatspans"> $500.00 USD </span> / month
+                            </p>
+                        </div>
+                        <div class="col-sm-3">
+                            <a href="{% url 'add_card' plan='Titans' %}"><button class="btn btn-primary upgrade" style="width: 85%" value="pro3"> Subscribe</button></a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+        </div>
+
+        <div id="idCard" style='display: none;' class="col-sm-6 subnamesdiv">
+            <h5 class="subnames">Payment details</h5>
+            <div class="row">
+                <div class="col-sm-3 divadjs text-center">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <img class="imgdetailsCard" src="{% static 'images/debit_card.svg' %}" alt="current plan">
+                        </div>
+                        <div class="col-sm-0">
+                            <p class="cardsTexts">Credit Card</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-sm-3 divadjs text-center">
+                    <div class="row">
+                        <div class="col-sm-6">
+                            <img class="imgdetailsCard" src="{% static 'images/cradit_card.svg' %}" alt="current plan">
+                        </div>
+                        <div class="col-sm-0">
+                            <p class="cardsTexts">Debit Card</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="subnameAverageChat">
+
+                <form>
+                    <div class="form-group">
+                        <label for="exampleInputEmail1" class="cardNames">Card Number </label>
+                        <input type="text" class="form-control cardNum" id="exampleInputEmail1"
+                            aria-describedby="emailHelp">
+
+                    </div>
+                </form>
+
+
+                <div class="row">
+                    <div class="col-sm-6">
+                        <p class="cardNames"> Expiration Date </p>
+                        <div class="row">
+                            <div class="col-sm-5">
+
+                                <input class="date-own1 form-control cardDetails" type="text" placeholder="month">
+                                <span> <i class="fa fa-angle-down carrots" aria-hidden="true"></i>
+                                </span>
+                            </div>
+                            <div class="col-sm-5">
+                                <input class="date-own form-control cardDetails" type="text" placeholder="year">
+                                <span> <i class="fa fa-angle-down carrots" aria-hidden="true"></i>
+                                </span>
+
+                            </div>
+
+
+
+                        </div>
+
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="cardNames1"> cvv</p>
+                        <div class="col-sm-5">
+                            <input class="own form-control" type="text" placeholder="cvv">
+
+                        </div>
+                    </div>
+                </div>
+                <p class="lastTexts cardNames">By submitting you payment details, you agree to Nuropedia's <span
+                        class="lastTextspan"> Terms of use </span> and <span class="lastTextspan"> Privacy
+                        policy.
+                    </span> </p>
+            </div>
+            <div class="col-sm-6 cardNames">
+                <button class="btn btn-primary upgrades" value="starter">
+                    Submit </button>
+            </div>
+        </div>
+
+
+
+
+    </div>
+</div>
+
+<script>
+    $('.date-own').datepicker({
+        minViewMode: 2,
+
+        format: 'yyyy',
+
+    });
+    $('.date-own1').datepicker({
+
+
+
+        format: "mm",
+    });
+
+    // $("#loader").show();
+
+</script>
+
+
+<script>
+    function selectPlan(){
+        console.log("hai");
+        console.log(window.event.target.value);
+        var plan=window.event.target.value;
+        $.ajax({
+                url: '{% url "billing" %}',
+                data: {
+                    'plan':plan
+                },
+                type: 'POST',
+                dataType: 'json',
+                success: function (data) {
+                    location.reload();
+                },
+        });
+                    
+    }
+</script>
+
+
+{% endblock %}

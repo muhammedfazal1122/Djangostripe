@@ -1,0 +1,35 @@
+{% extends 'payment/base.html' %}{% load static %}
+{% block Title %}
+
+Profile Page
+
+{% endblock %}
+
+{% block body %}
+
+<div class="col-sm-12" style="    padding-left: 0px !important;
+padding-right: 0px !important;">
+    <h5 class="hnames"> Profile </h5>
+</div>
+
+<div class="col-sm-12 ">
+    <div class="row">
+        <div class="col-sm-4 subnamesdiv">
+            <h5 class="subnames">User Profile Details: {{ request.user.first_name }}</h5>
+        </div>
+
+        <div class="col-sm-4 subnamesdiv">
+            <h5 class="subnames">Other Details</h5>
+        </div>
+
+        <div class="col-sm-4">
+            <a href="{% url 'logout' %}"><h5 class="subnamess">logout</h5></a>
+            
+        </div>
+
+
+    </div>
+</div>
+
+
+{% endblock %}
