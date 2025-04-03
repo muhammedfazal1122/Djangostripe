@@ -1,67 +1,104 @@
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from datetime import date
+from django.shortcuts import render, redirect
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from .models import Task, APIMetering
-from .serializers import TaskSerializer, APIMeteringSerializer
+from django.shortcuts import render, redirect, get_object_or_404
+from django.core.exceptions import ValidationError
 
-class TaskListCreateView(APIView):
-    """Handles listing and creating tasks."""
-    permission_classes = [IsAuthenticated]
+from django.shortcuts import render, redirect, get_object_or_404
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from .models import Task, APIMetering
 
-    def get(self, request):
-        """Get all tasks for the authenticated user."""
-        tasks = Task.objects.filter(user=request.user)
-        serializer = TaskSerializer(tasks, many=True)
-        return Response(serializer.data)
+@login_required
+def task_page(request):
+    tasks = Task.objects.filter(user=request.user)
+    metering, _ = APIMetering.objects.get_or_create(user=request.user)
 
-    def post(self, request):
-        """Create a new task while enforcing API metering."""
-        metering, _ = APIMetering.objects.get_or_create(user=request.user)
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
+
+        if not title or not description:
+            return JsonResponse({'error': 'Title and description are required'}, status=400)
 
         try:
-            metering.increment_calls()  # Check & increment API calls
-        except Exception as e:
-            return Response({"error": str(e)}, status=429)
+            metering.increment_calls()
+            
+            Task.objects.create(
+                user=request.user,
+                title=title,
+                description=description
+            )
+            
+            return redirect('task_page')
+            
+        except ValidationError as e:
+            return JsonResponse(
+                {'error': str(e)},
+                status=429  # Too Many Requests
+            )
 
-        serializer = TaskSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=201)
+    return render(
+        request,
+        'task_page.html',
+        {
+            'tasks': tasks,
+            'metering': metering,
+            'limits': metering.get_remaining_calls(),
+        }
+    )
+
+
+@login_required
+def update_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id, user=request.user)
+    
+    if request.method == 'POST':
+        task.title = request.POST.get('title')
+        task.description = request.POST.get('description')
+        task.save()
+        return redirect('task_page')
+    
+    return render(request, 'task_page.html', {'tasks': Task.objects.filter(user=request.user)})
+
+@login_required
+def delete_task(request, task_id):
+    task = get_object_or_404(Task, id=task_id, user=request.user)
+    task.delete()
+    return redirect('task_page')
+
+
+@login_required
+def task_list(request):
+    tasks = Task.objects.filter(user=request.user)
+    return render(request, 'task_list.html', {'tasks': tasks})
+
+
+
+@login_required
+def create_task(request):
+    if request.method == 'POST':
+        title = request.POST.get('title')
+        description = request.POST.get('description')
         
-        return Response(serializer.errors, status=400)
-
-class TaskDetailView(APIView):
-    """Handles updating and deleting a task."""
-    permission_classes = [IsAuthenticated]
-
-    def get_object(self, task_id, user):
-        """Retrieve the task or return 404 if not found."""
-        return get_object_or_404(Task, id=task_id, user=user)
-
-    def put(self, request, task_id):
-        """Update a task."""
-        task = self.get_object(task_id, request.user)
-        serializer = TaskSerializer(task, data=request.data, partial=True)
-
-        if serializer.is_valid():
-            serializer.save()
-            return Response(serializer.data)
-        
-        return Response(serializer.errors, status=400)
-
-    def delete(self, request, task_id):
-        """Delete a task."""
-        task = self.get_object(task_id, request.user)
-        task.delete()
-        return Response(status=204)
-
-class APIMeteringView(APIView):
-    """Returns API metering info for the authenticated user."""
-    permission_classes = [IsAuthenticated]
-
-    def get(self, request):
         metering, _ = APIMetering.objects.get_or_create(user=request.user)
-        serializer = APIMeteringSerializer(metering)
-        return Response(serializer.data)
+        
+        # Rate Limiting Logic
+        if metering.total_calls >= 100 or metering.daily_calls >= 10:
+            return JsonResponse({'error': 'API call limit exceeded'}, status=429)
+        
+        # Reset Daily Counter if New Day
+        if metering.last_reset != date.today():
+            metering.daily_calls = 0
+            metering.last_reset = date.today()
+        
+        metering.total_calls += 1
+        metering.daily_calls += 1
+        metering.save()
+        
+        Task.objects.create(user=request.user, title=title, description=description)
+        return redirect('task_list')
+
+    return render(request, 'create_task.html')
