@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.db import models
 from django.utils import timezone
 from datetime import date, timedelta
+from django.core.exceptions import ValidationError
 
 
 
@@ -13,55 +14,45 @@ class Task(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
 
+
+
+
 class APIMetering(models.Model):
-    user = models.OneToOneField('auth.User', on_delete=models.CASCADE)
-    total_calls = models.BigIntegerField(default=0)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    total_calls = models.IntegerField(default=0)
     daily_calls = models.IntegerField(default=0)
-    last_reset = models.DateField(null=True)
-    
+    last_reset = models.DateField(default=date.today)  # ✅ Set default value
+
     # Dynamic limits
     daily_limit = models.IntegerField(default=10)
-    total_limit = models.BigIntegerField(default=100)
+    total_limit = models.IntegerField(default=100)
 
     def reset_daily_calls(self):
-        """Reset daily calls counter if a new day has begun."""
-        today = date.today()
-        if self.last_reset != today:
+        """ Reset daily calls if a new day has started. """
+        if self.last_reset != date.today():
             self.daily_calls = 0
-            self.last_reset = today
+            self.last_reset = date.today()
             self.save()
 
-    @property
-    def is_within_limits(self):
-        """Check if API calls are within limits."""
-        return (
-            self.total_calls < self.total_limit and 
-            self.daily_calls < self.daily_limit
-        )
-
     def increment_calls(self):
-        """Increment both total and daily call counters."""
-        self.reset_daily_calls()  # Ensure daily counter is reset if needed
-        
-        if not self.is_within_limits:
-            raise ValidationError("API call limit exceeded")
+        """ Increment API call count, enforcing limits. """
+        self.reset_daily_calls()
+
+        if self.total_calls >= self.total_limit:
+            raise ValidationError("Total API call limit exceeded.")
+        if self.daily_calls >= self.daily_limit:
+            raise ValidationError("Daily API call limit exceeded.")
 
         self.total_calls += 1
         self.daily_calls += 1
         self.save()
 
     def get_remaining_calls(self):
-        """Get remaining calls for both limits."""
-        self.reset_daily_calls()  # Ensure daily counter is reset if needed
+        """ Return remaining API calls for user. """
         return {
-            'daily': max(0, self.daily_limit - self.daily_calls),
-            'total': max(0, self.total_limit - self.total_calls)
+            "daily_remaining": max(0, self.daily_limit - self.daily_calls),
+            "total_remaining": max(0, self.total_limit - self.total_calls),
         }
 
-    def update_limits(self, daily_limit=None, total_limit=None):
-        """Update API call limits."""
-        if daily_limit is not None:
-            self.daily_limit = daily_limit
-        if total_limit is not None:
-            self.total_limit = total_limit
-        self.save()
+    def __str__(self):
+        return f"{self.user.username} - {self.daily_calls}/{self.daily_limit} today"
