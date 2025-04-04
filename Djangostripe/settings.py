@@ -76,6 +76,11 @@ REST_FRAMEWORK = {
     ),
 }
 
+
+# Rate limiting settings
+RATELIMIT_CACHE_BACKEND = 'django.core.cache.backends.redis.RedisCache'
+RATELIMIT_CACHE_TIMEOUT = 86400  # 24 hours
+RATELIMIT_GLOBAL = '1000/d'  # Global rate limit as fallback
 from datetime import timedelta
 
 

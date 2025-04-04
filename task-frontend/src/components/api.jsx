@@ -1,24 +1,31 @@
 const BASE_URL = "http://127.0.0.1:8000";
-// src/api.js
-const API_URL = "http://localhost:8000/api"; // adjust if needed
+// src/api.jsconst
+const API_BASE = "http://localhost:8000/api"; // Update if your backend runs on a different port or URL
 
 export async function login(username, password) {
-  const res = await fetch(`${API_URL}/token/`, {
+  const res = await fetch(`${API_BASE}/token/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ username, password }),
   });
+
   return await res.json();
 }
 
 export async function register(username, password) {
-  const res = await fetch(`${API_URL}/register/`, {
+  const res = await fetch(`${API_BASE}/register/`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ username, password }),
   });
+
   return await res.json();
 }
+
 
 
 export const getTasks = async (token) => {
