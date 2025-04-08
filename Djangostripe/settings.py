@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'payments',  
     'djstripe',  
     'nuropayment',  
+    'task_metering',  
 ]
 
 
@@ -65,32 +66,45 @@ MIDDLEWARE = [
     
 
 CORS_ALLOW_ALL_ORIGINS = True  # Or set allowed origins
+from rest_framework.throttling import SimpleRateThrottle
+from django.core.cache import cache
+from datetime import date
 
-
+from datetime import timedelta
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
-    'DEFAULT_PERMISSION_CLASSES': (
+    'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
-    ),
+    ],
+    'DEFAULT_THROTTLE_CLASSES': [
+        'task_metering.throttling.UserRateThrottle',  # Update with your app name
+    ],
+    'DEFAULT_THROTTLE_RATES': {
+        'user': '100/hour',  # You can adjust this rate
+    }
 }
 
+# Caching: This is necessary for throttling to work
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
 
-# Rate limiting settings
-RATELIMIT_CACHE_BACKEND = 'django.core.cache.backends.redis.RedisCache'
-RATELIMIT_CACHE_TIMEOUT = 86400  # 24 hours
-RATELIMIT_GLOBAL = '1000/d'  # Global rate limit as fallback
-from datetime import timedelta
-
-
+# JWT Settings
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(days=1),
     "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
     "AUTH_HEADER_TYPES": ("Bearer",),
-    "AUTH_COOKIE_NAME": "access_token",  # Store JWT in a cookie
+    "AUTH_COOKIE_NAME": "access_token",
     "AUTH_COOKIE_HTTPONLY": True,
 }
+
+
+# Optional: Remove RATELIMIT_ settings unless using `django-ratelimit` package
+# If you are not using
 
 ROOT_URLCONF = 'Djangostripe.urls'
 
