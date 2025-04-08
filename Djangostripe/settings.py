@@ -69,21 +69,29 @@ CORS_ALLOW_ALL_ORIGINS = True  # Or set allowed origins
 from rest_framework.throttling import SimpleRateThrottle
 from django.core.cache import cache
 from datetime import date
-
 from datetime import timedelta
+
 REST_FRAMEWORK = {
+    # Authentication
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
+
+    # Permissions
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+
+    # Throttling
     'DEFAULT_THROTTLE_CLASSES': [
-        'task_metering.throttling.UserRateThrottle',  # Update with your app name
+        'task_metering.throttling.SubscriptionBasedThrottle',  # your custom class
     ],
     'DEFAULT_THROTTLE_RATES': {
-        'user': '100/hour',  # You can adjust this rate
-    }
+        'user': '100/day',  # only used by UserRateThrottle
+    },
+
+    # Versioning (optional but useful)
+    # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
 }
 
 # Caching: This is necessary for throttling to work
@@ -189,3 +197,8 @@ STRIPE_LIVE_MODE = False
 # Needed for webhooks, which are discussed later in the guide.
 DJSTRIPE_WEBHOOK_SECRET = os.environ.get("DJSTRIPE_WEBHOOK_SECRET", "whsec_xxx")
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
+
+
+# Choose which approach to use (True = Hard limits, False = Usage-based billing)
+USE_HARD_API_LIMITS = False  # Set to False for usage-based pricing
+FREE_TIER_API_LIMIT = 5  # Number of API calls allowed for users without subscriptions

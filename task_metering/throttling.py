@@ -1,50 +1,60 @@
-# throttling.py - Create a custom throttle class
-from rest_framework.throttling import SimpleRateThrottle
-from django.utils import timezone
-from datetime import date
-from .models import APIMetering
+from rest_framework.throttling import BaseThrottle
+from django.conf import settings
+from .models import APIMetering, UserSubscription
 
-class UserRateThrottle(SimpleRateThrottle):
-    """
-    Throttles requests by user and tracks API usage metrics.
-    """
-    scope = 'user'
-    
-    def get_cache_key(self, request, view):
-        """
-        Generate a cache key only for authenticated users.
-        """
-        print(f"THROTTLE: get_cache_key called for user {request.user}")
-
-        if not request.user or not request.user.is_authenticated:
-            return None  # Don't throttle unauthenticated requests
-        
-        return f"throttle_{self.scope}_{request.user.pk}"
+class SubscriptionBasedThrottle(BaseThrottle):
+    """Custom throttle based on subscription plans"""
     
     def allow_request(self, request, view):
-        print(f"THROTTLE: allow_request called for {request.method} to {request.path}")
-
         """
-        Check if request should be allowed and track API usage.
+        Check if request should be allowed based on subscription.
+        Also tracks API usage for billing.
         """
-        # Track API usage for authenticated users regardless of throttling
-        if request.user and request.user.is_authenticated:
-            self._track_api_usage(request)
+        # Only apply to authenticated users
+        if not request.user or not request.user.is_authenticated:
+            return True
             
-        # Let the parent class handle the actual throttling
-        return super().allow_request(request, view)
+        print(f"Checking throttle for user {request.user.username}")
         
-    def _track_api_usage(self, request):
+        try:
+            # Get or create API metering for the user
+            metering, created = APIMetering.objects.get_or_create(user=request.user)
+            
+            # For Hard Limit approach: Check if user has exceeded their plan limit
+            if getattr(settings, 'USE_HARD_API_LIMITS', True):
+                # Check if user has an active subscription with a plan
+                try:
+                    subscription = UserSubscription.objects.get(user=request.user, is_active=True)
+                    if not subscription.plan:
+                        # No plan assigned, but active subscription - might be a free tier
+                        # You can customize this logic based on your business rules
+                        plan_limit = 0  # Default to no access or customize as needed
+                    else:
+                        plan_limit = subscription.plan.base_api_calls
+                        
+                    # If limit exceeded, deny the request
+                    if metering.daily_count >= plan_limit:
+                        print(f"Request DENIED - User has exceeded their limit. Daily count: {metering.daily_count}, Limit: {plan_limit}")
+                        return False
+                    
+                except UserSubscription.DoesNotExist:
+                    # No active subscription
+                    free_tier_limit = getattr(settings, 'FREE_TIER_API_LIMIT', 0)
+                    if metering.daily_count >= free_tier_limit:
+                        print(f"Request DENIED - User has no subscription. Daily count: {metering.daily_count}, Free limit: {free_tier_limit}")
+                        return False
+            
+            # Now track the usage (only if we're allowing the request)
+            metering.increment(request.method)
+            print(f"Request ALLOWED - User {request.user.username} daily count: {metering.daily_count}")
+            return True
+            
+        except Exception as e:
+            print(f"Throttling error: {str(e)}")
+            return True  # Default to allowing in case of errors
+    
+    def wait(self):
         """
-        Track API usage metrics in the database.
+        Returns the recommended next request time in seconds.
         """
-        print(f"THROTTLE: _track_api_usage called for {request.user.username}")
-        metering, created = APIMetering.objects.get_or_create(user=request.user)
-        print(f"BEFORE: total_count={metering.total_count}, get_count={metering.get_count}")
-        old_count = metering.total_count  # Save old count for comparison
-        metering.increment(request.method)
-        
-        # Print debugging information
-        print(f"API Call: User {request.user.username} - {request.method} request to {request.path}")
-        print(f"Counter increased from {old_count} to {metering.total_count}")
-        print(f"Method counts: GET={metering.get_count}, POST={metering.post_count}, PUT={metering.put_count}, DELETE={metering.delete_count}")
+        return 24 * 60 * 60  # Suggest waiting 24 hours
