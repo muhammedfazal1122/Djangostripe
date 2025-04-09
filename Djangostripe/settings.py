@@ -195,10 +195,11 @@ STRIPE_TEST_PUBLIC_KEY = "pk_test_51R6qCKCvbNLHEvrSTXy4zyJMjSCrugObVpNz5ognpCz3P
 STRIPE_TEST_SECRET_KEY = "sk_test_51R6qCKCvbNLHEvrSTKpCzcSOUyHCZv8tiOHCxAoLEPqZcpgm2re8MQZ7lkza4sHfB5JYu0jTJylpqAvqLfTOWJPn00EfMlyxNb"
 STRIPE_LIVE_MODE = False
 # Needed for webhooks, which are discussed later in the guide.
-DJSTRIPE_WEBHOOK_SECRET = os.environ.get("DJSTRIPE_WEBHOOK_SECRET", "whsec_xxx")
+STRIPE_WEBHOOK_SECRET = "whsec_efb1497ae6820b61aac66147feee8fff930a40090e0176c40a7945d6ad80e92b"
 DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
+STRIPE_PRICING_TABLE_ID = 'prctbl_1RBvkBCvbNLHEvrSJcskd0uf'
 
 
 # Choose which approach to use (True = Hard limits, False = Usage-based billing)
-USE_HARD_API_LIMITS = False  # Set to False for usage-based pricing
+USE_HARD_API_LIMITS = True  # Set to False for usage-based pricing
 FREE_TIER_API_LIMIT = 5  # Number of API calls allowed for users without subscriptions

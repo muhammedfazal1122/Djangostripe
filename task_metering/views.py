@@ -26,7 +26,9 @@ class SubscriptionPlansView(APIView):
             'overage_cost': f"${float(plan.overage_unit_amount):.2f} per additional call"
         } for plan in plans]
         return Response(data)
+    
 
+    
 class CreateCheckoutSessionView(APIView):
     """Create a Stripe checkout session for subscription"""
     permission_classes = [IsAuthenticated]
@@ -52,29 +54,50 @@ class CreateCheckoutSessionView(APIView):
                 subscription.stripe_customer_id = customer.id
                 subscription.save()
             
-            # Create checkout session
-            checkout_session = stripe.checkout.Session.create(
-                customer=subscription.stripe_customer_id,
-                payment_method_types=['card'], 
-                line_items=[{
+            # Check if the price is metered
+            try:
+                price = stripe.Price.retrieve(plan.stripe_price_id)
+                is_metered = hasattr(price.recurring, 'usage_type') and price.recurring.usage_type == 'metered'
+                
+                # Prepare line item without quantity by default
+                line_item = {
                     'price': plan.stripe_price_id,
-                    'quantity': 1,
-                }],
-                mode='subscription',
-                success_url=request.build_absolute_uri('/subscription/success/'),
-                cancel_url=request.build_absolute_uri('/subscription/cancel/'),
-                metadata={
-                    'user_id': request.user.id,
-                    'plan_id': plan.id
                 }
-            )
-            
-            return Response({'checkout_url': checkout_session.url})
+                
+                # Only add quantity for non-metered prices
+                if not is_metered:
+                    line_item['quantity'] = 1
+                
+                # For debugging
+                print(f"Price ID: {plan.stripe_price_id}")
+                print(f"Is metered: {is_metered}")
+                print(f"Line item: {line_item}")
+                
+                # Create checkout session
+                checkout_session = stripe.checkout.Session.create(
+                    customer=subscription.stripe_customer_id,
+                    payment_method_types=['card'], 
+                    line_items=[line_item],
+                    mode='subscription',
+                    success_url=request.build_absolute_uri('/subscription/success/'),
+                    cancel_url=request.build_absolute_uri('/subscription/cancel/'),
+                    metadata={
+                        'user_id': request.user.id,
+                        'plan_id': plan.id
+                    }
+                )
+                
+                return Response({'checkout_url': checkout_session.url})
+                
+            except stripe.error.StripeError as se:
+                return Response({'error': f"Stripe error: {str(se)}"}, status=status.HTTP_400_BAD_REQUEST)
             
         except SubscriptionPlan.DoesNotExist:
             return Response({'error': 'Plan not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+
 
 class SubscriptionWebhookView(APIView):
     """Handle Stripe webhooks for subscription events"""
@@ -96,8 +119,8 @@ class SubscriptionWebhookView(APIView):
                 self._handle_subscription_updated(event)
             elif event['type'] == 'customer.subscription.deleted':
                 self._handle_subscription_deleted(event)
-            elif event['type'] == 'invoice.payment_succeeded':
-                self._handle_invoice_payment_succeeded(event)
+            # elif event['type'] == 'invoice.payment_succeeded':
+            #     self._handle_invoice_payment_succeeded(event)
             
             return Response({'status': 'success'})
             
@@ -150,16 +173,16 @@ class SubscriptionWebhookView(APIView):
         except UserSubscription.DoesNotExist:
             pass
     
-    def _handle_invoice_payment_succeeded(self, event):
-        invoice = event['data']['object']
-        # Reset billing cycle usage when payment succeeds
-        try:
-            user_sub = UserSubscription.objects.get(stripe_customer_id=invoice['customer'])
-            metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
-            metering.billing_cycle_count = 0
-            metering.save()
-        except UserSubscription.DoesNotExist:
-            pass
+    # def _handle_invoice_payment_succeeded(self, event):
+    #     invoice = event['data']['object']
+    #     # Reset billing cycle usage when payment succeeds
+    #     try:
+    #         user_sub = UserSubscription.objects.get(stripe_customer_id=invoice['customer'])
+    #         metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
+    #         metering.billing_cycle_count = 0
+    #         metering.save()
+    #     except UserSubscription.DoesNotExist:
+    #         pass
 
 class UserSubscriptionStatusView(APIView):
     """Get current user's subscription status"""
@@ -270,3 +293,15 @@ class APIMetricsView(APIView):
         }
         
         return Response(data)
+
+
+
+
+class Successpage(APIView):
+    """API: View your API usage metrics."""
+    permission_classes = [IsAuthenticated]
+    
+    def get(self, request):
+        return Response({"message": "Success! Your subscription is active."})
+    
+
