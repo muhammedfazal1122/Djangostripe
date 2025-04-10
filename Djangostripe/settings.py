@@ -188,8 +188,7 @@ STATIC_URL = 'static/'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
-# STRIPE_PUBLIC_KEY = os.getenv('STRIPE_PUBLIC_KEY')
-# STRIPE_SECRET_KEY = os.getenv('STRIPE_SECRET_KEY')
+
 
 STRIPE_TEST_PUBLIC_KEY = "pk_test_51R6qCKCvbNLHEvrSTXy4zyJMjSCrugObVpNz5ognpCz3PuvY9Au3bEc1iFFk5jytRybWvRP2lpuBBOulOkl3JLTH00exB5T6Ov"
 STRIPE_TEST_SECRET_KEY = "sk_test_51R6qCKCvbNLHEvrSTKpCzcSOUyHCZv8tiOHCxAoLEPqZcpgm2re8MQZ7lkza4sHfB5JYu0jTJylpqAvqLfTOWJPn00EfMlyxNb"
@@ -200,6 +199,66 @@ DJSTRIPE_FOREIGN_KEY_TO_FIELD = "id"
 STRIPE_PRICING_TABLE_ID = 'prctbl_1RBvkBCvbNLHEvrSJcskd0uf'
 
 
+# ----------# Settings Explanation-------------------
+# USE_HARD_API_LIMITS = False - When set to False, users can make unlimited API calls, but they'll be billed for usage beyond their plan's included amount.
+# FREE_TIER_API_LIMIT = 5 - Users without a subscription can make 5 API calls per day.
+# USE_STRIPE_METERED_BILLING = True - This sends usage data to Stripe for metered billing.
+
 # Choose which approach to use (True = Hard limits, False = Usage-based billing)
-USE_HARD_API_LIMITS = True  # Set to False for usage-based pricing
+USE_HARD_API_LIMITS = False  # Set to False for usage-based pricing
 FREE_TIER_API_LIMIT = 5  # Number of API calls allowed for users without subscriptions
+USE_STRIPE_METERED_BILLING = False
+
+
+
+CELERY_BROKER_URL = 'redis://localhost:6380/2'
+# CELERY_BROKER_URL = 'amqp://localhost'  # for RabbitMQ
+CELERY_RESULT_BACKEND = 'redis://localhost:6380/2'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'  # Use your timezone
+
+# # Celery Beat Schedule
+from celery.schedules import crontab
+
+# CELERY_BEAT_SCHEDULE = {
+#     'process-daily-api-usage': {
+#         'task': 'task_metering.tasks.process_daily_api_usage',
+#         'schedule': crontab(hour=0, minute=5),  # Run at 00:05 every day
+#     },
+#     'reset-daily-counters': {
+#         'task': 'task_metering.tasks.reset_daily_counters',
+#         'schedule': crontab(hour=0, minute=1),  # Run at 00:01 every day
+#     },
+#     'check-billing-cycles': {
+#         'task': 'task_metering.tasks.check_billing_cycles',
+#         'schedule': crontab(hour=1, minute=0),  # Run at 01:00 every day
+#     },
+# }
+
+# celery -A Djangostripe worker -l info
+
+# for beat:
+# celery -A Djangostripe beat -l info
+
+
+CELERY_BEAT_SCHEDULE = {
+    'process-daily-api-usage': {
+        'task': 'task_metering.tasks.process_daily_api_usage',
+        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+    },
+    'reset-daily-counters': {
+        'task': 'task_metering.tasks.reset_daily_counters',
+        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+    },
+    'check-billing-cycles': {
+        'task': 'task_metering.tasks.check_billing_cycles',
+        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+    },
+    'report-all-users-usage': {
+        'task': 'task_metering.tasks.report_all_users_usage',
+        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+    },
+
+}

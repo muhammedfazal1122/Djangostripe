@@ -1,5 +1,8 @@
 from rest_framework.throttling import BaseThrottle
 from django.conf import settings
+from django.core.cache import cache
+
+from .utils import report_usage_to_stripe
 from .models import APIMetering, UserSubscription
 
 class SubscriptionBasedThrottle(BaseThrottle):
@@ -46,6 +49,18 @@ class SubscriptionBasedThrottle(BaseThrottle):
             
             # Now track the usage (only if we're allowing the request)
             metering.increment(request.method)
+            
+            # Report metered usage to Stripe if needed
+            if getattr(settings, 'USE_STRIPE_METERED_BILLING', False):
+                try:
+                    subscription = UserSubscription.objects.get(user=request.user, is_active=True)
+                    if subscription.plan:
+                        # Report usage to Stripe
+                        report_usage_to_stripe(request.user, 1)  # Report 1 API call
+                except UserSubscription.DoesNotExist:
+                    pass
+                    
+
             print(f"Request ALLOWED - User {request.user.username} daily count: {metering.daily_count}")
             return True
             
@@ -58,3 +73,5 @@ class SubscriptionBasedThrottle(BaseThrottle):
         Returns the recommended next request time in seconds.
         """
         return 24 * 60 * 60  # Suggest waiting 24 hours
+
+# Removed UserDailyRateThrottle that depends on views.report_usage_to_stripe

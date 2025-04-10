@@ -1,5 +1,5 @@
 # views.py - Add subscription management views
-from datetime import date
+from datetime import date, datetime
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -28,7 +28,7 @@ class SubscriptionPlansView(APIView):
         return Response(data)
     
 
-    
+
 class CreateCheckoutSessionView(APIView):
     """Create a Stripe checkout session for subscription"""
     permission_classes = [IsAuthenticated]
@@ -98,7 +98,6 @@ class CreateCheckoutSessionView(APIView):
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
 
-
 class SubscriptionWebhookView(APIView):
     """Handle Stripe webhooks for subscription events"""
     permission_classes = []  # Public endpoint
@@ -113,7 +112,9 @@ class SubscriptionWebhookView(APIView):
             )
             
             # Handle subscription events
-            if event['type'] == 'customer.subscription.created':
+            if event['type'] == 'checkout.session.completed':
+                self._handle_checkout_completed(event)
+            elif event['type'] == 'customer.subscription.created':
                 self._handle_subscription_created(event)
             elif event['type'] == 'customer.subscription.updated':
                 self._handle_subscription_updated(event)
@@ -129,6 +130,50 @@ class SubscriptionWebhookView(APIView):
         except stripe.error.SignatureVerificationError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
     
+    def _handle_checkout_completed(self, event):
+        session = event['data']['object']
+        
+        # Extract customer and subscription info
+        customer_id = session.get('customer')
+        subscription_id = session.get('subscription')
+        metadata = session.get('metadata', {})
+        user_id = metadata.get('user_id')
+        plan_id = metadata.get('plan_id')
+        
+        if subscription_id and user_id and plan_id:
+            # Get the subscription details
+            subscription = stripe.Subscription.retrieve(subscription_id)
+            
+            try:
+                # First try to get the User and Plan objects
+                from django.contrib.auth.models import User
+                user = User.objects.get(id=user_id)
+                plan = SubscriptionPlan.objects.get(id=plan_id)
+                
+                # Update or create the subscription
+                user_sub, created = UserSubscription.objects.update_or_create(
+                    user=user,
+                    defaults={
+                        'stripe_customer_id': customer_id,
+                        'stripe_subscription_id': subscription_id,
+                        'plan': plan,
+                        'is_active': subscription.status == 'active',
+                        'current_period_start': subscription.current_period_start,
+                        'current_period_end': subscription.current_period_end
+                    }
+                )
+                
+                # Reset API usage counters
+                metering, created = APIMetering.objects.get_or_create(user=user)
+                metering.billing_cycle_count = 0
+                metering.save()
+                
+                print(f"Subscription activated for user {user.username} on plan {plan.name}")
+                
+            except (User.DoesNotExist, SubscriptionPlan.DoesNotExist) as e:
+                print(f"Error handling checkout completion: {str(e)}")
+    
+
     def _handle_subscription_created(self, event):
         subscription = event['data']['object']
         metadata = subscription.get('metadata', {})
