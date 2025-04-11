@@ -94,48 +94,61 @@ def check_billing_cycles():
 
 
 
+# # tasks.py
+# # Replace your report_usage_to_stripe_task with this:
 
-@shared_task
-def report_usage_to_stripe_task(user_id, count):
-    """
-    Task to report a single user's API usage to Stripe
-    """
-    try:
-        subscription = UserSubscription.objects.get(user_id=user_id)
-        if not subscription.stripe_subscription_id:
-            return f"No Stripe subscription for user {user_id}"
+# @shared_task
+# def report_usage_to_stripe_task(user_id, count):
+#     """
+#     Task to report a single user's API usage to Stripe
+#     """
+#     try:
+#         user = User.objects.get(id=user_id)
+#         subscription = UserSubscription.objects.get(user=user, is_active=True)
+#         if not subscription.stripe_customer_id:
+#             return f"No Stripe customer ID for user {user_id}"
 
-        stripe.SubscriptionItem.create_usage_record(
-            subscription.stripe_subscription_id,
-            quantity=count,
-            timestamp=int(timezone.now().timestamp()),
-            action='increment',
-        )
-        message = f"✅ Reported {count} API calls for user {user_id} to Stripe"
-        print(message)
-        return message
-    except Exception as e:
-        error_message = f"❌ Error reporting usage for user {user_id}: {str(e)}"
-        print(error_message)
-        return error_message
+#         # Use the MeterEvent API
+#         stripe.api_key = settings.STRIPE_TEST_SECRET_KEY
+#         stripe.billing.MeterEvent.create(
+#             event_name="api_calls",  # The meter name configured in Stripe
+#             payload={
+#                 "value": str(count),  # Must be a string
+#                 "stripe_customer_id": subscription.stripe_customer_id
+#             }
+#         )
+        
+#         message = f"✅ Reported {count} API calls for user {user_id} to Stripe Meter"
+#         print(message)
+#         print('event_name=============================', "api_calls")
+#         print('payload=============================', {
+#             "value": str(count),
+#             "stripe_customer_id": subscription.stripe_customer_id
+#         })
+#         return message
+#     except Exception as e:
+#         error_message = f"❌ Error reporting usage for user {user_id}: {str(e)}"
+#         print(error_message)
+#         return error_message
+    
 
 
-@shared_task
-def report_all_users_usage():
-    """
-    Task to report overage usage for all users to Stripe
-    """
-    today = timezone.now().date()
-    reported = 0
+# @shared_task
+# def report_all_users_usage():
+#     """
+#     Task to report overage usage for all users to Stripe
+#     """
+#     today = timezone.now().date()
+#     reported = 0
 
-    for metering in APIMetering.objects.all():
-        try:
-            usage = APIUsageBilling.objects.get(user=metering.user, date=today)
-            count = usage.overage_count
-            if count > 0:
-                report_usage_to_stripe_task.delay(metering.user.id, count)
-                reported += 1
-        except APIUsageBilling.DoesNotExist:
-            continue
+#     for metering in APIMetering.objects.all():
+#         try:
+#             usage = APIUsageBilling.objects.get(user=metering.user, date=today)
+#             count = usage.overage_count
+#             if count > 0:
+#                 report_usage_to_stripe_task.delay(metering.user.id, count)
+#                 reported += 1
+#         except APIUsageBilling.DoesNotExist:
+#             continue
 
-    return f"Queued Stripe usage reports for {reported} users"
+#     return f"Queued Stripe usage reports for {reported} users"

@@ -207,7 +207,7 @@ STRIPE_PRICING_TABLE_ID = 'prctbl_1RBvkBCvbNLHEvrSJcskd0uf'
 # Choose which approach to use (True = Hard limits, False = Usage-based billing)
 USE_HARD_API_LIMITS = False  # Set to False for usage-based pricing
 FREE_TIER_API_LIMIT = 5  # Number of API calls allowed for users without subscriptions
-USE_STRIPE_METERED_BILLING = False
+USE_STRIPE_METERED_BILLING = True  # Enable Stripe metering
 
 
 
@@ -242,23 +242,19 @@ from celery.schedules import crontab
 # for beat:
 # celery -A Djangostripe beat -l info
 
+from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     'process-daily-api-usage': {
         'task': 'task_metering.tasks.process_daily_api_usage',
-        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+        'schedule': crontab(hour=0, minute=0),  # Every day at 00:00
     },
     'reset-daily-counters': {
         'task': 'task_metering.tasks.reset_daily_counters',
-        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+        'schedule': crontab(hour=0, minute=5),  # Every day at 00:05 (slight delay to avoid clash)
     },
     'check-billing-cycles': {
         'task': 'task_metering.tasks.check_billing_cycles',
-        'schedule': crontab(minute='*/1'),  # Every 2 minutes
+        'schedule': crontab(hour=0, minute=10),  # Every day at 00:10
     },
-    'report-all-users-usage': {
-        'task': 'task_metering.tasks.report_all_users_usage',
-        'schedule': crontab(minute='*/1'),  # Every 2 minutes
-    },
-
 }

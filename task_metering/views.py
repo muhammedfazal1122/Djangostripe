@@ -218,16 +218,16 @@ class SubscriptionWebhookView(APIView):
         except UserSubscription.DoesNotExist:
             pass
     
-    # def _handle_invoice_payment_succeeded(self, event):
-    #     invoice = event['data']['object']
-    #     # Reset billing cycle usage when payment succeeds
-    #     try:
-    #         user_sub = UserSubscription.objects.get(stripe_customer_id=invoice['customer'])
-    #         metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
-    #         metering.billing_cycle_count = 0
-    #         metering.save()
-    #     except UserSubscription.DoesNotExist:
-    #         pass
+    def _handle_invoice_payment_succeeded(self, event):
+        invoice = event['data']['object']
+        # Reset billing cycle usage when payment succeeds
+        try:
+            user_sub = UserSubscription.objects.get(stripe_customer_id=invoice['customer'])
+            metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
+            metering.billing_cycle_count = 0
+            metering.save()
+        except UserSubscription.DoesNotExist:
+            pass
 
 class UserSubscriptionStatusView(APIView):
     """Get current user's subscription status"""
