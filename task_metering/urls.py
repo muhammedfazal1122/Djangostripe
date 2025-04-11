@@ -4,6 +4,8 @@ from .views import (
     TaskDetailView, 
     APIMetricsView,
     SubscriptionPlansView,
+    CancelSubscriptionView,
+    UpdateSubscriptionView,
     CreateCheckoutSessionView,
     SubscriptionWebhookView,
     UserSubscriptionStatusView,
@@ -19,6 +21,9 @@ urlpatterns = [
     # Subscription URLs
     path('subscription/plans/', SubscriptionPlansView.as_view(), name='subscription-plans'),
     path('subscription/checkout/', CreateCheckoutSessionView.as_view(), name='create-checkout'),
+    path('subscription/cancel/', CancelSubscriptionView.as_view(), name='cancel-subscription'),
+    path('subscription/update/', UpdateSubscriptionView.as_view(), name='update-subscription'),
+
     path('subscription/webhook/', SubscriptionWebhookView.as_view(), name='subscription-webhook'),
     path('subscription/status/', UserSubscriptionStatusView.as_view(), name='subscription-status'),
     path('subscription/success/', Successpage.as_view(), name='Successpage'),

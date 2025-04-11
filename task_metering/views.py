@@ -97,6 +97,96 @@ class CreateCheckoutSessionView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         
+class CancelSubscriptionView(APIView):
+    """Cancel the user's current subscription"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        try:
+            subscription = UserSubscription.objects.get(user=request.user, is_active=True)
+            
+            if not subscription.stripe_subscription_id:
+                return Response({"error": "No active subscription found"}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Cancel the subscription in Stripe
+            try:
+                canceled_subscription = stripe.Subscription.delete(
+                    subscription.stripe_subscription_id,
+                    # Optionally, add prorate=True to prorate on cancelation
+                )
+                
+                # Update the local subscription record immediately
+                # Note: The webhook will also update this, but we update now for immediate user feedback
+                subscription.is_active = False
+                subscription.save()
+                
+                return Response({
+                    "status": "canceled",
+                    "message": "Your subscription has been canceled",
+                    "effective_date": datetime.fromtimestamp(canceled_subscription.canceled_at).strftime('%Y-%m-%d') if hasattr(canceled_subscription, 'canceled_at') else "immediate"
+                })
+                
+            except stripe.error.StripeError as e:
+                return Response({"error": f"Stripe error: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+                
+        except UserSubscription.DoesNotExist:
+            return Response({"error": "You don't have an active subscription"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class UpdateSubscriptionView(APIView):
+    """Update the user's subscription to a different plan"""
+    permission_classes = [IsAuthenticated]
+    
+    def post(self, request):
+        plan_id = request.data.get('plan_id')
+        if not plan_id:
+            return Response({"error": "Plan ID is required"}, status=status.HTTP_400_BAD_REQUEST)
+            
+        try:
+            # Verify the new plan exists
+            new_plan = SubscriptionPlan.objects.get(id=plan_id)
+            
+            # Get the user's current subscription
+            subscription = UserSubscription.objects.get(user=request.user, is_active=True)
+            
+            if not subscription.stripe_subscription_id:
+                return Response({"error": "No active subscription found"}, status=status.HTTP_400_BAD_REQUEST)
+                
+            # Update the subscription in Stripe
+            try:
+                updated_subscription = stripe.Subscription.modify(
+                    subscription.stripe_subscription_id,
+                    items=[{
+                        'id': stripe.Subscription.retrieve(subscription.stripe_subscription_id)['items']['data'][0].id,
+                        'price': new_plan.stripe_price_id,
+                    }],
+                    # Optional: proration settings
+                    proration_behavior='create_prorations',  # or 'none' to disable prorations
+                )
+                
+                # Update the local subscription record
+                subscription.plan = new_plan
+                subscription.save()
+                
+                return Response({
+                    "status": "updated",
+                    "message": f"Your subscription has been updated to {new_plan.name}",
+                    "effective_date": datetime.fromtimestamp(updated_subscription.current_period_start).strftime('%Y-%m-%d')
+                })
+                
+            except stripe.error.StripeError as e:
+                return Response({"error": f"Stripe error: {str(e)}"}, status=status.HTTP_400_BAD_REQUEST)
+                
+        except SubscriptionPlan.DoesNotExist:
+            return Response({"error": "Plan not found"}, status=status.HTTP_404_NOT_FOUND)
+        except UserSubscription.DoesNotExist:
+            return Response({"error": "You don't have an active subscription"}, status=status.HTTP_404_NOT_FOUND)
+        except Exception as e:
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
 class SubscriptionWebhookView(APIView):
     """Handle Stripe webhooks for subscription events"""
@@ -113,12 +203,16 @@ class SubscriptionWebhookView(APIView):
             
             # Handle subscription events
             if event['type'] == 'checkout.session.completed':
+                print("event['type'] Checkout session completed")
                 self._handle_checkout_completed(event)
             elif event['type'] == 'customer.subscription.created':
+                print("event['type'] Subscription created")
                 self._handle_subscription_created(event)
             elif event['type'] == 'customer.subscription.updated':
+                print("event['type'] Subscription updated")
                 self._handle_subscription_updated(event)
             elif event['type'] == 'customer.subscription.deleted':
+                print("event['type'] Subscription deleted")
                 self._handle_subscription_deleted(event)
             # elif event['type'] == 'invoice.payment_succeeded':
             #     self._handle_invoice_payment_succeeded(event)
@@ -132,7 +226,7 @@ class SubscriptionWebhookView(APIView):
     
     def _handle_checkout_completed(self, event):
         session = event['data']['object']
-        
+        print(f"Checkout session completed: {session['id']}")
         # Extract customer and subscription info
         customer_id = session.get('customer')
         subscription_id = session.get('subscription')
@@ -197,31 +291,58 @@ class SubscriptionWebhookView(APIView):
                 
             except UserSubscription.DoesNotExist:
                 pass
-    
+        
     def _handle_subscription_updated(self, event):
         subscription = event['data']['object']
         try:
+            print(f"Subscription updated: {subscription['id']}")
             user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
+            
+            # Update status, dates, and metadata
             user_sub.is_active = subscription['status'] == 'active'
-            user_sub.current_period_start = subscription['current_period_start']
-            user_sub.current_period_end = subscription['current_period_end']
+            user_sub.current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
+            user_sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
+            
+            # Check if the price/plan has changed
+            stripe_price_id = subscription['items']['data'][0]['price']['id']
+            try:
+                # Find the plan that matches this price ID
+                new_plan = SubscriptionPlan.objects.get(stripe_price_id=stripe_price_id)
+                if user_sub.plan != new_plan:
+                    print(f"Plan changed from {user_sub.plan.name if user_sub.plan else 'None'} to {new_plan.name}")
+                    user_sub.plan = new_plan
+            except SubscriptionPlan.DoesNotExist:
+                print(f"Warning: No plan found for Stripe price ID {stripe_price_id}")
+            
             user_sub.save()
+            
+            # Reset API usage counters on plan change
+            metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
+            metering.billing_cycle_count = 0
+            metering.save()
+            
         except UserSubscription.DoesNotExist:
-            pass
-    
+            print(f"Could not find subscription with ID {subscription['id']}")
+
+    # Update the _handle_subscription_deleted method:
     def _handle_subscription_deleted(self, event):
         subscription = event['data']['object']
         try:
+            print(f"Subscription deleted: {subscription['id']}")
             user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
             user_sub.is_active = False
             user_sub.save()
+            
+            # You may want to notify the user or perform cleanup actions here
+            print(f"User {user_sub.user.username}'s subscription has been canceled")
         except UserSubscription.DoesNotExist:
-            pass
+            print(f"Could not find subscription with ID {subscription['id']}")
     
     def _handle_invoice_payment_succeeded(self, event):
         invoice = event['data']['object']
         # Reset billing cycle usage when payment succeeds
         try:
+            print(f"Invoice payment succeeded: {invoice['id']}")
             user_sub = UserSubscription.objects.get(stripe_customer_id=invoice['customer'])
             metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
             metering.billing_cycle_count = 0
