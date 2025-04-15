@@ -48,9 +48,8 @@ INSTALLED_APPS = [
     'payments',  
     'djstripe',  
     'nuropayment',  
-    'task_metering',  
+    'task_metering.apps.TaskMeteringConfig', 
 ]
-
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -58,11 +57,15 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+    
+    'django.contrib.auth.middleware.AuthenticationMiddleware',  
+    
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 
-]   
+    'task_metering.middleware.APIUsageMiddleware',  
+]
+
     
 
 CORS_ALLOW_ALL_ORIGINS = True  # Or set allowed origins
@@ -75,6 +78,8 @@ REST_FRAMEWORK = {
     # Authentication
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework_simplejwt.authentication.JWTAuthentication',
+        'rest_framework.authentication.SessionAuthentication',
+
     ),
 
     # Permissions
@@ -82,13 +87,13 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 
-    # Throttling
-    'DEFAULT_THROTTLE_CLASSES': [
-        'task_metering.throttling.SubscriptionBasedThrottle',  # your custom class
-    ],
-    'DEFAULT_THROTTLE_RATES': {
-        'user': '100/day',  # only used by UserRateThrottle
-    },
+    # # Throttling
+    # 'DEFAULT_THROTTLE_CLASSES': [
+    #     'task_metering.throttling.SubscriptionBasedThrottle',  # your custom class
+    # ],
+    # 'DEFAULT_THROTTLE_RATES': {
+    #     'user': '100/day',  # only used by UserRateThrottle
+    # },
 
     # Versioning (optional but useful)
     # 'DEFAULT_VERSIONING_CLASS': 'rest_framework.versioning.NamespaceVersioning',
@@ -222,27 +227,11 @@ CELERY_TIMEZONE = 'UTC'  # Use your timezone
 # # Celery Beat Schedule
 from celery.schedules import crontab
 
-# CELERY_BEAT_SCHEDULE = {
-#     'process-daily-api-usage': {
-#         'task': 'task_metering.tasks.process_daily_api_usage',
-#         'schedule': crontab(hour=0, minute=5),  # Run at 00:05 every day
-#     },
-#     'reset-daily-counters': {
-#         'task': 'task_metering.tasks.reset_daily_counters',
-#         'schedule': crontab(hour=0, minute=1),  # Run at 00:01 every day
-#     },
-#     'check-billing-cycles': {
-#         'task': 'task_metering.tasks.check_billing_cycles',
-#         'schedule': crontab(hour=1, minute=0),  # Run at 01:00 every day
-#     },
-# }
-
 # celery -A Djangostripe worker -l info
 
 # for beat:
 # celery -A Djangostripe beat -l info
 
-from celery.schedules import crontab
 
 CELERY_BEAT_SCHEDULE = {
     'process-daily-api-usage': {

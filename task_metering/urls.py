@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     TaskListCreateView, 
-    TaskDetailView, 
+    TaskDetailView,
     APIMetricsView,
     SubscriptionPlansView,
     CancelSubscriptionView,
@@ -9,13 +9,15 @@ from .views import (
     CreateCheckoutSessionView,
     SubscriptionWebhookView,
     UserSubscriptionStatusView,
-    Successpage
+    Successpage,
+    AdminAPIUsageView,
+    UserAPIUsageView,
 )
 
 urlpatterns = [
-    # Existing URLs
+    # Task API URLs
     path('tasks/', TaskListCreateView.as_view(), name='task-list-create'),
-    path('tasks/<int:task_id>/', TaskDetailView.as_view(), name='task-detail'),
+    path('tasks/<int:task_id>/', TaskDetailView.as_view(), name='task-detail'),  # Fixed missing task_id parameter
     path('metrics/', APIMetricsView.as_view(), name='api-metrics'),
     
     # Subscription URLs
@@ -23,8 +25,13 @@ urlpatterns = [
     path('subscription/checkout/', CreateCheckoutSessionView.as_view(), name='create-checkout'),
     path('subscription/cancel/', CancelSubscriptionView.as_view(), name='cancel-subscription'),
     path('subscription/update/', UpdateSubscriptionView.as_view(), name='update-subscription'),
-
-    path('subscription/webhook/', SubscriptionWebhookView.as_view(), name='subscription-webhook'),
     path('subscription/status/', UserSubscriptionStatusView.as_view(), name='subscription-status'),
     path('subscription/success/', Successpage.as_view(), name='Successpage'),
+    
+    # API Usage
+    path('api/admin/usage/', AdminAPIUsageView.as_view(), name='admin-api-usage'),
+    path('api/usage/', UserAPIUsageView.as_view(), name='user-api-usage'),
+    
+    # Webhook endpoint (for Stripe CLI and live webhooks)
+    path('webhook', SubscriptionWebhookView.as_view(), name='subscription-webhook-direct'),
 ]

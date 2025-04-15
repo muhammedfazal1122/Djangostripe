@@ -59,8 +59,12 @@ class APIUsageBilling(models.Model):
     def __str__(self):
         return f"{self.user.username}'s usage on {self.date}"
     
+    
     def calculate_overage(self):
-        """Calculate overage based on subscription plan"""
+        """
+        Calculate overage based on subscription plan, without enforcing hard limits.
+        Pure usage-based approach where all calls above the base limit are billed.
+        """
         try:
             subscription = UserSubscription.objects.get(user=self.user, is_active=True)
             if subscription.plan:
@@ -74,10 +78,12 @@ class APIUsageBilling(models.Model):
                     self.billed_amount = 0
             self.save()
         except UserSubscription.DoesNotExist:
-            self.overage_count = self.call_count  # All calls are overage if no subscription
-            self.billed_amount = 0  # Don't bill users without a plan
+            # For users without subscriptions, track usage but don't bill
+            self.overage_count = 0
+            self.billed_amount = 0
             self.save()
-    
+
+
     def create_stripe_invoice_item(self):
         """Create a Stripe invoice item for overage charges"""
         if self.overage_count > 0 and self.billed_amount > 0 and not self.is_billed:
@@ -122,54 +128,6 @@ class APIMetering(models.Model):
     def __str__(self):
         return f"API usage for {self.user.username}"
     
-    def increment(self, method):
-        """Increment the appropriate counter and handle usage tracking for billing"""
-        today = date.today()
-        
-        # Reset daily count if it's a new day
-        if self.last_reset_date != today:
-            self.daily_count = 0
-            self.last_reset_date = today
-        
-        # Increment all the counters
-        self.total_count += 1
-        self.daily_count += 1
-        self.billing_cycle_count += 1
-        
-        # Update method-specific counter
-        method = method.upper()
-        if method == 'GET':
-            self.get_count += 1
-        elif method == 'POST':
-            self.post_count += 1
-        elif method == 'PUT' or method == 'PATCH':
-            self.put_count += 1
-        elif method == 'DELETE':
-            self.delete_count += 1
-        
-        # Track usage for billing
-        usage, created = APIUsageBilling.objects.get_or_create(
-            user=self.user, 
-            date=today
-        )
-        usage.call_count += 1
-        usage.save()
-        
-        # Calculate overage for real-time usage tracking
-        usage.calculate_overage()
-        
-        self.save()
-    
-    def is_limit_exceeded(self):
-        """Check if user has exceeded their subscription limit (for hard limits)"""
-        try:
-            subscription = UserSubscription.objects.get(user=self.user, is_active=True)
-            # For hard limit approach - check if daily count exceeds plan limit
-            if subscription.plan:
-                return self.daily_count >= subscription.plan.base_api_calls
-            return True  # No plan means no access
-        except UserSubscription.DoesNotExist:
-            return True  # No subscription means no access
 
 
 
