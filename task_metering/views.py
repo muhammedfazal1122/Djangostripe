@@ -204,6 +204,8 @@ class UpdateSubscriptionView(APIView):
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
+
+
 class SubscriptionWebhookView(APIView):
     """Handle Stripe webhooks for subscription events"""
     permission_classes = []  # Public endpoint
@@ -217,56 +219,92 @@ class SubscriptionWebhookView(APIView):
                 payload, sig_header, settings.STRIPE_WEBHOOK_SECRET
             )
             
-            # Handle subscription events
-            if event['type'] == 'checkout.session.completed':
-                print("event['type'] Checkout session completed")
-                self._handle_checkout_completed(event)
+            print(f"🔔 Received webhook event: {event['type']}")
+            
+            # Handle customer events
+            if event['type'] == 'customer.created':
+                self._handle_customer_created(event)
             elif event['type'] == 'customer.subscription.created':
-                print("event['type'] Subscription created")
                 self._handle_subscription_created(event)
-            elif event['type'] == 'customer.subscription.updated':
-                print("event['type'] Subscription updated")
-                self._handle_subscription_updated(event)
             elif event['type'] == 'customer.subscription.deleted':
-                print("event['type'] Subscription deleted")
                 self._handle_subscription_deleted(event)
-            # elif event['type'] == 'invoice.payment_succeeded':
-            #     self._handle_invoice_payment_succeeded(event)
+            elif event['type'] == 'customer.subscription.paused':
+                self._handle_subscription_paused(event)  
+            elif event['type'] == 'customer.subscription.resumed':
+                self._handle_subscription_resumed(event)
+            elif event['type'] == 'customer.subscription.updated':
+                self._handle_subscription_updated(event)
+            elif event['type'] == 'customer.subscription.trial_will_end':
+                self._handle_subscription_trial_will_end(event)
+            elif event['type'] == 'checkout.session.completed':
+                self._handle_checkout_completed(event)
+            elif event['type'] == 'invoice.payment_succeeded':
+                self._handle_invoice_payment_succeeded(event)
             
             return Response({'status': 'success'})
             
         except ValueError as e:
+            print(f"❌ Webhook error: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
         except stripe.error.SignatureVerificationError as e:
+            print(f"🔐 Webhook signature verification failed: {str(e)}")
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        except Exception as e:
+            print(f"⚠️ Unexpected webhook error: {str(e)}")
+            return Response({'error': 'Unexpected error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+    
+    def _handle_customer_created(self, event):
+        """Handle customer.created event"""
+        customer = event['data']['object']
+        print(f"👤 Customer created: {customer['id']}")
         
+        # Extract customer data
+        email = customer.get('email')
+        metadata = customer.get('metadata', {})
+        user_id = metadata.get('user_id')
+        
+        if user_id:
+            try:
+                from django.contrib.auth.models import User
+                user = User.objects.get(id=user_id)
+                
+                # Update or create UserSubscription record
+                subscription, created = UserSubscription.objects.update_or_create(
+                    user=user,
+                    defaults={
+                        'stripe_customer_id': customer['id'],
+                        'is_active': False  # Initially inactive until subscription is created
+                    }
+                )
+                
+                print(f"✅ Customer record linked to user: {user.username}")
+            except User.DoesNotExist:
+                print(f"⚠️ User ID {user_id} from customer metadata not found")
+    
     def _handle_checkout_completed(self, event):
+        """Handle checkout.session.completed event"""
         session = event['data']['object']
-        print(f"Checkout session completed: {session['id']}")
+        print(f"🛒 Checkout session completed: {session['id']}")
+        
         # Extract customer and subscription info
         customer_id = session.get('customer')
         subscription_id = session.get('subscription')
         metadata = session.get('metadata', {})
         user_id = metadata.get('user_id')
         plan_id = metadata.get('plan_id')
-        print(f"Subscription subscription_id:_____________ {subscription_id}")
-        print(f"Subscription customer_id: {customer_id}")
-        print(f"Subscription user_id: {user_id}")
-        print(f"Subscription plan_id: {plan_id}")
+        
+        print(f"📝 Details - Subscription ID: {subscription_id}, Customer ID: {customer_id}, User ID: {user_id}, Plan ID: {plan_id}")
 
         if subscription_id and user_id and plan_id:
             # Get the subscription details
             subscription = stripe.Subscription.retrieve(subscription_id)
-            print(f"Subscription details: {subscription}")
-            print(f"Subscription subscription_id==========: {subscription_id}")
             
             try:
-                # First try to get the User and Plan objects
                 from django.contrib.auth.models import User
                 user = User.objects.get(id=user_id)
                 plan = SubscriptionPlan.objects.get(id=plan_id)
-                print(f"User found)))))))))))): {user.username}")
-                print(f"Plan found: {plan.name}")
+                print(f"👤 User found: {user.username}")
+                print(f"📋 Plan found: {plan.name}")
                 
                 # Convert Unix timestamps to Python datetime objects
                 from datetime import datetime
@@ -285,112 +323,209 @@ class SubscriptionWebhookView(APIView):
                         'current_period_end': current_period_end
                     }
                 )
-                print(f"User subscription created/updated: {created} for user {user.username}")
-                print(f"User subscription updated_______: {user_sub.stripe_subscription_id} for user {user.username}")
+                
+                print(f"💰 User subscription {'created' if created else 'updated'} for {user.username}")
                 
                 # Reset API usage counters
                 metering, created = APIMetering.objects.get_or_create(user=user)
                 metering.billing_cycle_count = 0
                 metering.save()
                 
-                print(f"Subscription activated for user {user.username} on plan {plan.name},-----------------{metering.billing_cycle_count}")
-                return Response({'status': 'success'})
+                print(f"🔄 API usage reset for user {user.username}")
                 
             except (User.DoesNotExist, SubscriptionPlan.DoesNotExist) as e:
-                print(f"Error handling checkout completion: {str(e)}") 
+                print(f"❌ Error processing checkout: {str(e)}")
 
     def _handle_subscription_created(self, event):
+        """Handle customer.subscription.created event"""
         subscription = event['data']['object']
-        metadata = subscription.get('metadata', {})
-        user_id = metadata.get('user_id')
-        plan_id = metadata.get('plan_id')
+        print(f"📝 Subscription created: {subscription['id']}")
         
-        if user_id and plan_id:
+        # Get customer ID from subscription
+        customer_id = subscription.get('customer')
+        
+        try:
+            # Find the user subscription by Stripe customer ID
+            user_sub = UserSubscription.objects.get(stripe_customer_id=customer_id)
+            
+            # Update the subscription details
+            user_sub.stripe_subscription_id = subscription['id']
+            user_sub.is_active = subscription['status'] == 'active'
+            
+            # Get the plan based on the price ID
+            stripe_price_id = subscription['items']['data'][0]['price']['id']
             try:
-                user_sub = UserSubscription.objects.get(stripe_customer_id=subscription['customer'])
-                user_sub.stripe_subscription_id = subscription['id']
-                print(f"Subscription created: {subscription['id']} for user {user_sub.user.username}")  
-                user_sub.plan_id = plan_id
-                user_sub.is_active = subscription['status'] == 'active'
-                
-                # Convert Unix timestamps to datetime objects
-                from datetime import datetime
-                user_sub.current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
-                user_sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
-                
-                user_sub.save()
-                
-                # Reset API usage counters
-                metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
-                metering.billing_cycle_count = 0
-                metering.save()
-                
-            except UserSubscription.DoesNotExist:
-                pass    
-
+                plan = SubscriptionPlan.objects.get(stripe_price_id=stripe_price_id)
+                user_sub.plan = plan
+                print(f"📋 Subscription plan: {plan.name}")
+            except SubscriptionPlan.DoesNotExist:
+                print(f"⚠️ No plan found for price ID: {stripe_price_id}")
+            
+            # Update subscription dates
+            from datetime import datetime
+            user_sub.current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
+            user_sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
+            
+            # Save the changes
+            user_sub.save()
+            print(f"✅ Subscription created for user: {user_sub.user.username}")
+            
+            # Reset API usage counters
+            metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
+            metering.billing_cycle_count = 0
+            metering.save()
+            
+        except UserSubscription.DoesNotExist:
+            print(f"❌ No user subscription found for customer: {customer_id}")
 
     def _handle_subscription_updated(self, event):
+        """Handle customer.subscription.updated event"""
         subscription = event['data']['object']
+        print(f"🔄 Subscription updated: {subscription['id']}")
+        
         try:
-            print(f"Subscription updated: {subscription['id']}")
             user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
             
-            # Update status, dates, and metadata
+            # Update status and dates
             user_sub.is_active = subscription['status'] == 'active'
             user_sub.current_period_start = datetime.fromtimestamp(subscription['current_period_start'])
             user_sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
             
-            # Check if the price/plan has changed
+            # Check if plan/price changed
             stripe_price_id = subscription['items']['data'][0]['price']['id']
             try:
-                # Find the plan that matches this price ID
                 new_plan = SubscriptionPlan.objects.get(stripe_price_id=stripe_price_id)
                 if user_sub.plan != new_plan:
-                    print(f"Plan changed from {user_sub.plan.name if user_sub.plan else 'None'} to {new_plan.name}")
+                    old_plan = user_sub.plan.name if user_sub.plan else "None"
+                    print(f"📋 Plan changed: {old_plan} → {new_plan.name}")
                     user_sub.plan = new_plan
+                    
+                    # Reset API usage counters on plan change
+                    metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
+                    metering.billing_cycle_count = 0
+                    metering.save()
+                    print(f"🔄 API usage reset due to plan change")
             except SubscriptionPlan.DoesNotExist:
-                print(f"Warning: No plan found for Stripe price ID {stripe_price_id}")
+                print(f"⚠️ No plan found for price ID: {stripe_price_id}")
             
+            # Save the updated subscription
             user_sub.save()
-            
-            # Reset API usage counters on plan change
-            metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
-            metering.billing_cycle_count = 0
-            metering.save()
+            print(f"✅ Subscription updated for user: {user_sub.user.username}")
             
         except UserSubscription.DoesNotExist:
-            print(f"Could not find subscription with ID {subscription['id']}")
+            print(f"❌ No subscription found with ID: {subscription['id']}")
 
-    # Update the _handle_subscription_deleted method:
     def _handle_subscription_deleted(self, event):
+        """Handle customer.subscription.deleted event"""
         subscription = event['data']['object']
+        print(f"❌ Subscription deleted: {subscription['id']}")
+        
         try:
-            print(f"Subscription deleted: {subscription['id']}")
             user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
             user_sub.is_active = False
             user_sub.save()
             
-            # You may want to notify the user or perform cleanup actions here
-            print(f"User {user_sub.user.username}'s subscription has been canceled")
+            # Optional: Clear the subscription ID if you want to completely detach it
+            # user_sub.stripe_subscription_id = None
+            # user_sub.save()
+            
+            print(f"💡 User {user_sub.user.username}'s subscription is now inactive")
+            
         except UserSubscription.DoesNotExist:
-            print(f"Could not find subscription with ID {subscription['id']}")
-    
-    def _handle_invoice_payment_succeeded(self, event):
-        invoice = event['data']['object']
-        # Reset billing cycle usage when payment succeeds
+            print(f"❓ No subscription found with ID: {subscription['id']}")
+
+    def _handle_subscription_paused(self, event):
+        """Handle customer.subscription.paused event"""
+        subscription = event['data']['object']
+        print(f"⏸️ Subscription paused: {subscription['id']}")
+        
         try:
-            print(f"Invoice payment succeeded: {invoice['id']}")
-            user_sub = UserSubscription.objects.get(stripe_customer_id=invoice['customer'])
+            user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
+            user_sub.is_active = False  # Mark as inactive while paused
+            user_sub.paused_at = datetime.now()
+            user_sub.save()
+            
+            print(f"⏸️ Subscription paused for user: {user_sub.user.username}")
+            
+        except UserSubscription.DoesNotExist:
+            print(f"❓ No subscription found with ID: {subscription['id']}")
+
+    def _handle_subscription_resumed(self, event):
+        """Handle customer.subscription.resumed event"""
+        subscription = event['data']['object']
+        print(f"▶️ Subscription resumed: {subscription['id']}")
+        
+        try:
+            user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
+            user_sub.is_active = True  # Mark as active again
+            user_sub.paused_at = None  # Clear the paused timestamp
+            user_sub.current_period_end = datetime.fromtimestamp(subscription['current_period_end'])
+            user_sub.save()
+            
+            # Reset API usage counters on resume
             metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
             metering.billing_cycle_count = 0
             metering.save()
+            
+            print(f"▶️ Subscription resumed for user: {user_sub.user.username}")
+            
         except UserSubscription.DoesNotExist:
-            pass
+            print(f"❓ No subscription found with ID: {subscription['id']}")
+
+    def _handle_subscription_trial_will_end(self, event):
+        """Handle customer.subscription.trial_will_end event"""
+        subscription = event['data']['object']
+        print(f"⏰ Trial ending soon: {subscription['id']}")
+        
+        try:
+            user_sub = UserSubscription.objects.get(stripe_subscription_id=subscription['id'])
+            
+            # You may want to notify the user that their trial is ending
+            # This is just a placeholder for where you'd implement that logic
+            trial_end = datetime.fromtimestamp(subscription['trial_end'])
+            print(f"📆 Trial for user {user_sub.user.username} ends on {trial_end.strftime('%Y-%m-%d')}")
+            
+            # Optional: Send an email to the user
+            # from django.core.mail import send_mail
+            # send_mail(
+            #     'Your trial is ending soon',
+            #     f'Your trial will end on {trial_end.strftime("%Y-%m-%d")}.',
+            #     'from@gmail.com',
+            #     [user_sub.user.email],
+            #     fail_silently=False,
+            # )
+            
+        except UserSubscription.DoesNotExist:
+            print(f"❓ No subscription found with ID: {subscription['id']}")
+
+    def _handle_invoice_payment_succeeded(self, event):
+        """Handle invoice.payment_succeeded event"""
+        invoice = event['data']['object']
+        print(f"💵 Invoice payment succeeded: {invoice['id']}")
+        
+        # Extract customer and subscription info
+        customer_id = invoice.get('customer')
+        subscription_id = invoice.get('subscription')
+        
+        if customer_id:
+            try:
+                user_sub = UserSubscription.objects.get(stripe_customer_id=customer_id)
+                
+                # Reset API usage counters for billing cycle
+                metering, created = APIMetering.objects.get_or_create(user=user_sub.user)
+                metering.billing_cycle_count = 0
+                metering.save()
+                
+                print(f"🔄 Reset billing cycle count for user: {user_sub.user.username}")
+                
+            except UserSubscription.DoesNotExist:
+                print(f"❓ No user subscription found for customer: {customer_id}")
+
 
 class UserSubscriptionStatusView(APIView):
     """Get current user's subscription status"""
     permission_classes = [IsAuthenticated]
-    # throttle_classes = [SubscriptionBasedThrottle]
+    throttle_classes = [SubscriptionBasedThrottle]
     
     def get(self, request):
         try:
@@ -434,7 +569,7 @@ class UserSubscriptionStatusView(APIView):
 class TaskListCreateView(APIView):
     """API: Get list of tasks & Create a task."""
     permission_classes = [IsAuthenticated]
-    # throttle_classes = [SubscriptionBasedThrottle]
+    throttle_classes = [SubscriptionBasedThrottle]
     
     def get(self, request):
         print(f"📋 {request.user} requested task list.")
@@ -454,7 +589,7 @@ class TaskListCreateView(APIView):
 class TaskDetailView(APIView):
     """API: Retrieve, Update or Delete a specific task."""
     permission_classes = [IsAuthenticated]
-    # throttle_classes = [SubscriptionBasedThrottle]
+    throttle_classes = [SubscriptionBasedThrottle]
     
     def get_object(self, task_id, user):
         return get_object_or_404(Task, id=task_id, user=user)
@@ -480,7 +615,7 @@ class TaskDetailView(APIView):
 class APIMetricsView(APIView):
     """API: View your API usage metrics."""
     permission_classes = [IsAuthenticated]
-    # throttle_classes = [SubscriptionBasedThrottle]
+    throttle_classes = [SubscriptionBasedThrottle]
     
     def get(self, request):
         metering, created = APIMetering.objects.get_or_create(user=request.user)
